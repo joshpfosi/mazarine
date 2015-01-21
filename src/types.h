@@ -13,7 +13,7 @@
 /* misc */
 #define LED_ON        255
 #define LED_OFF       0
-#define SLEEP_DUR     15000
+#define SLEEP_DUR     90000
 
 /* frequencies */
 #define TEN_HERTZ     50

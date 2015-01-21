@@ -119,7 +119,7 @@ void setup() {
     pinMode(POTPIN1,   INPUT);
     pinMode(POTPIN2,   INPUT);
 
-    attachInterrupt(PIN1, setSwitch1, RISING); // NOTE should be FALLING
+    attachInterrupt(PIN1, setSwitch1, FALLING);
     attachInterrupt(PIN2, setSwitch2, RISING);
 }
 
