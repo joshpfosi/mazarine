@@ -58,7 +58,7 @@ int curState = ON;
 
 void loop() {
     curState = state[curState]();
-    if (curState != RUN) analogWrite(RED_LED, 0);
+    if (curState != RUN) digitalWrite(RED_LED, LOW);
 }
 
 int on(void) {
@@ -109,7 +109,7 @@ int run(void) {
             blueLedStatus = (blueLedStatus == 0) ? LED_ON : LED_OFF;
             analogWrite(BLUE_LED, blueLedStatus);
         }
-        if (switch2) analogWrite(RED_LED, LED_ON);
+        if (switch2) digitalWrite(RED_LED, HIGH);
     }
 
     return RUN;
