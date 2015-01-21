@@ -7,6 +7,8 @@
 #define GREEN_LED     8
 #define PIN1          0
 #define PIN2          1
+#define POTPIN1       A0
+#define POTPIN2       A1
 
 /* states */
 #define ON            0
@@ -22,13 +24,15 @@
 #define SLEEP_DUR     15000
 
 /* frequencies */
-#define TEN_HERTZ     100
-#define FOUR_HERTZ    250
-#define TWO_HERTZ     500
-#define ONE_HERTZ     1000
+#define TEN_HERTZ     50
+#define FOUR_HERTZ    125
+#define TWO_HERTZ     250
+#define ONE_HERTZ     500
 
 /* global which tracks diagnostic errors */
 int numErrors = 5;
+
+/* contains interrupt state */
 int switch1   = FALSE;
 int switch2   = FALSE;
 
@@ -50,6 +54,10 @@ void setup() {
     pinMode(RED_LED,   OUTPUT);
     pinMode(BLUE_LED,  OUTPUT);
     pinMode(GREEN_LED, OUTPUT);
+
+    pinMode(POTPIN1,   INPUT);
+    pinMode(POTPIN2,   INPUT);
+
     attachInterrupt(PIN1, setSwitch1, RISING); // NOTE should be FALLING
     attachInterrupt(PIN2, setSwitch2, RISING);
 }
@@ -60,6 +68,8 @@ void loop() {
     curState = state[curState]();
     if (curState != RUN) digitalWrite(RED_LED, LOW);
 }
+
+/* ---------- STATE FXNS ---------- */
 
 int on(void) {
     digitalWrite(RED_LED, HIGH); delay(ONE_HERTZ);
@@ -75,39 +85,50 @@ int off(void) {
 int run(void) {
     if (millis() > SLEEP_DUR) return SLEEP;
 
-    float brightness = LED_ON; 
-    long prevMillisGreen = millis(), prevMillisBlue = millis(), currentMillis = 0;
+    float brightness = LED_ON, pot1Val = 0, pot2Val = 0;
+    long prevMillisGreen = millis(), 
+         prevMillisBlue = millis(), 
+         currentMillis = 0;
     int fadeAmt = 5, blueLedStatus = 0, freq;
 
     while (1) {
         currentMillis = millis();
 
+        pot1Val = analogRead(POTPIN1)  / 500.0;
+        pot2Val = (analogRead(POTPIN2) / 1023.0) * LED_ON;
+
         long greenInterval = currentMillis - prevMillisGreen;
 
+        /* flash green LED */
         if (greenInterval > 120 && brightness > 0) {
             prevMillisGreen = currentMillis;
             brightness -= fadeAmt;
             analogWrite(GREEN_LED, brightness);    
         } 
         else if (brightness <= 0) {
-            if (greenInterval > 1000) {
+            if (greenInterval > 2000) {
                 analogWrite(GREEN_LED, LED_OFF); return RUN;
             }
-            else if (greenInterval > 750) { analogWrite(GREEN_LED, LED_OFF); }
-            else if (greenInterval > 500) { analogWrite(GREEN_LED, LED_ON);  }
-            else if (greenInterval > 250) { analogWrite(GREEN_LED, LED_OFF); }
-            else if (greenInterval > 0)   { analogWrite(GREEN_LED, LED_ON);  }
+            else if (greenInterval > 1500) { analogWrite(GREEN_LED, LED_OFF); }
+            else if (greenInterval > 1000) { analogWrite(GREEN_LED, LED_ON);  }
+            else if (greenInterval > 500)  { analogWrite(GREEN_LED, LED_OFF); }
+            else if (greenInterval > 0)    { analogWrite(GREEN_LED, LED_ON);  }
         }
 
-        /* blue LED */
+        /* flash blue LED */
         long blueInterval = currentMillis - prevMillisBlue;
         freq = (switch1) ? TEN_HERTZ : ONE_HERTZ;
+        freq *= pot1Val;
+
         if (blueInterval > freq) {
             prevMillisBlue = currentMillis;
             blueLedStatus = (blueLedStatus == 0) ? LED_ON : LED_OFF;
             analogWrite(BLUE_LED, blueLedStatus);
         }
-        if (switch2) digitalWrite(RED_LED, HIGH);
+
+        /* reduce brightness by number between 0 and 255 */
+        if (switch2) analogWrite(RED_LED, LED_ON - pot2Val);
+
     }
 
     return RUN;
