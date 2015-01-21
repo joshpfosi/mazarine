@@ -15,19 +15,26 @@ void setSwitch2(void);
 #define GREEN_LED     8
 #define PIN1          0
 #define PIN2          1
-#define TIMER         12
+
+/* states */
 #define ON            0
 #define OFF           1
 #define RUN           2
 #define SLEEP         3
 #define DIAG          4
+
 #define ONE_SEC_DELAY 20
 #define FALSE         0
 #define TRUE          1
+#define LED_ON        255
+#define LED_OFF       0
+#define SLEEP_DUR     15000
+#define ONE_HERTZ     1000
+#define TEN_HERTZ     100
+#define FOUR_HERTZ    250
 
 /* global which tracks diagnostic errors */
 int numErrors = 5;
-int timer     = 0;
 int switch1   = FALSE;
 int switch2   = FALSE;
 
@@ -59,7 +66,6 @@ int curState = ON;
 void loop() {
     curState = state[curState]();
     if (curState != RUN) analogWrite(RED_LED, 0);
-    timer++;
 }
 
 int on(void) {
@@ -76,67 +82,41 @@ int off(void) {
 }
 
 int run(void) {
-    if (timer == TIMER) return SLEEP;
+    if (millis() > SLEEP_DUR) return SLEEP;
 
     float brightness = 255.0; 
-    // NUM_BLINKS 60 or 6
-    // DELAY ONE_HERTZ TEN_HERTZ
+    long prevMillisGreen = millis(), prevMillisBlue = millis(), currentMillis = 0;
+    int fadeAmt = 5, blueLedStatus = 0, freq;
 
-    // fade LED
-    if (!switch1) {
-        float fadeAmount = brightness / 5; // NOTE this is sketchy
+    while (1) {
+        currentMillis = millis();
 
-        while (brightness > 0) {
+        long greenInterval = currentMillis - prevMillisGreen;
+
+        if (greenInterval > 120 && brightness > 0) {
+            prevMillisGreen = currentMillis;
+            brightness -= fadeAmt;
             analogWrite(GREEN_LED, brightness);    
-            brightness -= fadeAmount;
-            analogWrite(BLUE_LED, 255);
-            delay(1000);    
-
-            analogWrite(GREEN_LED, brightness);    
-            brightness -= fadeAmount;
-            analogWrite(BLUE_LED, 0);
-            delay(1000);    
+        } 
+        else if (brightness <= 0) {
+            if (greenInterval > 1000) {
+                analogWrite(GREEN_LED, LED_OFF); return RUN;
+            }
+            else if (greenInterval > 750) { analogWrite(GREEN_LED, LED_OFF); }
+            else if (greenInterval > 500) { analogWrite(GREEN_LED, LED_ON);  }
+            else if (greenInterval > 250) { analogWrite(GREEN_LED, LED_OFF); }
+            else if (greenInterval > 0)   { analogWrite(GREEN_LED, LED_ON);  }
         }
 
-        analogWrite(BLUE_LED, 255);
-        // blink twice at 2 Hz
-        analogWrite(GREEN_LED, 255); delay(500);
-        analogWrite(GREEN_LED, 0);   delay(500);
-
-        analogWrite(BLUE_LED, 0);
-
-        analogWrite(GREEN_LED, 255); delay(500);
-        analogWrite(GREEN_LED, 0);   delay(500);
-    } 
-    else {
-        float fadeAmount = brightness / 60;
-
-        while (brightness > 0) {
-            if (switch2) analogWrite(RED_LED, 255);
-
-            analogWrite(GREEN_LED, brightness);    
-            brightness -= fadeAmount;
-            analogWrite(BLUE_LED, 255);
-            delay(100);    
-
-            analogWrite(GREEN_LED, brightness);    
-            brightness -= fadeAmount;
-            analogWrite(BLUE_LED, 0);
-            delay(100);    
+        /* blue LED */
+        long blueInterval = currentMillis - prevMillisBlue;
+        freq = (switch1) ? TEN_HERTZ : ONE_HERTZ;
+        if (blueInterval > freq) {
+            prevMillisBlue = currentMillis;
+            blueLedStatus = (blueLedStatus == 0) ? LED_ON : LED_OFF;
+            analogWrite(BLUE_LED, blueLedStatus);
         }
-
-        analogWrite(GREEN_LED, 255);
-        analogWrite(BLUE_LED, 255);  delay(100);
-        analogWrite(BLUE_LED, 0);    delay(100);
-        analogWrite(BLUE_LED, 255);  delay(100);
-        analogWrite(BLUE_LED, 0);    delay(100);
-        analogWrite(BLUE_LED, 255);  delay(100);
-        analogWrite(GREEN_LED, 0);
-        analogWrite(BLUE_LED, 255);  delay(100);
-        analogWrite(BLUE_LED, 0);    delay(100);
-        analogWrite(BLUE_LED, 255);  delay(100);
-        analogWrite(BLUE_LED, 0);    delay(100);
-        analogWrite(BLUE_LED, 255);  delay(100);
+        if (switch2) analogWrite(RED_LED, LED_ON);
     }
 
     return RUN;
@@ -145,20 +125,20 @@ int run(void) {
 int sleep(void) {
     int i;
     for (i = 0; i < 4; ++i) {
-        analogWrite(BLUE_LED, 255); delay(250);
-        analogWrite(BLUE_LED, 0);   delay(250);
+        analogWrite(BLUE_LED, LED_ON);  delay(FOUR_HERTZ);
+        analogWrite(BLUE_LED, LED_OFF); delay(FOUR_HERTZ);
     }
 
-    int brightness = 255, fadeAmount = 5; 
+    int brightness = LED_ON, fadeAmt = 5; 
 
     // fade LED
     while (brightness > 0) {
         analogWrite(BLUE_LED, brightness);    
-        brightness -= fadeAmount;
-        delay(ONE_SEC_DELAY);    
+        brightness -= fadeAmt;
+        delay(20);    
     }
 
-    analogWrite(BLUE_LED, 0);
+    analogWrite(BLUE_LED, LED_OFF);
 
     return OFF;
 }
