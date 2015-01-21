@@ -1,54 +1,26 @@
-#define FALSE         0
-#define TRUE          1
-
-/* pins */
-#define RED_LED       6
-#define BLUE_LED      4
-#define GREEN_LED     8
-#define PIN1          0
-#define PIN2          1
-#define POTPIN1       A0
-#define POTPIN2       A1
-
-/* states */
-#define ON            0
-#define OFF           1
-#define RUN           2
-#define SLEEP         3
-#define DIAG          4
-
-/* misc */
-#define LED_ON        255
-#define LED_OFF       0
-#define SLEEP_DUR     15000
-
-/* frequencies */
-#define TEN_HERTZ     50
-#define FOUR_HERTZ    125
-#define TWO_HERTZ     250
-#define ONE_HERTZ     500
+#include "types.h"
 
 /* global which tracks arbitrary diagnostic errors */
 int numErrors = 5;
 
 /* represents interrupt state */
-int switch1   = FALSE;
-int switch2   = FALSE;
+int switch1 = FALSE;
+int switch2 = FALSE;
 
 /* -------------------- STATE FXNS -------------------- */
 
-int on(void) {
+States on(void) {
     digitalWrite(RED_LED, HIGH); delay(ONE_HERTZ);
     digitalWrite(RED_LED, LOW);  delay(ONE_HERTZ);
 
     return DIAG;
 }
 
-int off(void) {
+States off(void) {
     return OFF;
 }
 
-int run(void) {
+States run(void) {
     if (millis() > SLEEP_DUR) return SLEEP;
 
     float brightness = LED_ON, pot1Val = 0, pot2Val = 0;
@@ -99,7 +71,7 @@ int run(void) {
     }
 }
 
-int sleep(void) {
+States sleep(void) {
     int i, brightness = LED_ON, fadeAmt = 5;
     for (i = 0; i < 4; ++i) {
         analogWrite(BLUE_LED, LED_ON);  delay(FOUR_HERTZ);
@@ -118,7 +90,7 @@ int sleep(void) {
     return OFF;
 }
 
-int diag(void) {
+States diag(void) {
     int i;
     for (i = 0; i < numErrors; ++i) {
         digitalWrite(RED_LED, HIGH); delay(TWO_HERTZ);
@@ -135,7 +107,7 @@ void setSwitch2(void) { switch2 = switch1; }
 
 /* -------------------- STATE ARRAY -------------------- */
 
-int (* state[])(void) = { on, off, run, sleep, diag };
+States (* state[])(void) = { on, off, run, sleep, diag };
 
 /* -------------------- SETUP AND LOOP -------------------- */
 
@@ -151,7 +123,7 @@ void setup() {
     attachInterrupt(PIN2, setSwitch2, RISING);
 }
 
-int curState = ON;
+States curState = ON;
 
 void loop() {
     curState = state[curState]();
