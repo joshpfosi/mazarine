@@ -62,10 +62,8 @@ void loop() {
 }
 
 int on(void) {
-    digitalWrite(RED_LED, HIGH);
-    delay(1000);
-    digitalWrite(RED_LED, LOW);
-    delay(1000);
+    digitalWrite(RED_LED, HIGH); delay(ONE_HERTZ);
+    digitalWrite(RED_LED, LOW);  delay(ONE_HERTZ);
 
     return DIAG;
 }
@@ -77,7 +75,7 @@ int off(void) {
 int run(void) {
     if (millis() > SLEEP_DUR) return SLEEP;
 
-    float brightness = 255.0; 
+    float brightness = LED_ON; 
     long prevMillisGreen = millis(), prevMillisBlue = millis(), currentMillis = 0;
     int fadeAmt = 5, blueLedStatus = 0, freq;
 

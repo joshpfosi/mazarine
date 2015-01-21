@@ -10,6 +10,10 @@ int diag(void);
 void setSwitch1(void);
 void setSwitch2(void);
 #line 1 "src/sketch.ino"
+#define FALSE         0
+#define TRUE          1
+
+/* pins */
 #define RED_LED       6
 #define BLUE_LED      4
 #define GREEN_LED     8
@@ -23,15 +27,17 @@ void setSwitch2(void);
 #define SLEEP         3
 #define DIAG          4
 
+/* misc */
 #define ONE_SEC_DELAY 20
-#define FALSE         0
-#define TRUE          1
 #define LED_ON        255
 #define LED_OFF       0
 #define SLEEP_DUR     15000
-#define ONE_HERTZ     1000
+
+/* frequencies */
 #define TEN_HERTZ     100
 #define FOUR_HERTZ    250
+#define TWO_HERTZ     500
+#define ONE_HERTZ     1000
 
 /* global which tracks diagnostic errors */
 int numErrors = 5;
@@ -47,7 +53,6 @@ int diag  (void);
 
 /* states */
 int (* state[])(void) = { on, off, run, sleep, diag };
-//enum states { ON, OFF, RUN, SLEEP, DIAG, MAX_STATES } currentState;
 
 /* ISRs */
 void setSwitch1(void);
@@ -65,14 +70,12 @@ int curState = ON;
 
 void loop() {
     curState = state[curState]();
-    if (curState != RUN) analogWrite(RED_LED, 0);
+    if (curState != RUN) digitalWrite(RED_LED, LOW);
 }
 
 int on(void) {
-    digitalWrite(RED_LED, HIGH);
-    delay(1000);
-    digitalWrite(RED_LED, LOW);
-    delay(1000);
+    digitalWrite(RED_LED, HIGH); delay(ONE_HERTZ);
+    digitalWrite(RED_LED, LOW);  delay(ONE_HERTZ);
 
     return DIAG;
 }
@@ -84,7 +87,7 @@ int off(void) {
 int run(void) {
     if (millis() > SLEEP_DUR) return SLEEP;
 
-    float brightness = 255.0; 
+    float brightness = LED_ON; 
     long prevMillisGreen = millis(), prevMillisBlue = millis(), currentMillis = 0;
     int fadeAmt = 5, blueLedStatus = 0, freq;
 
@@ -93,6 +96,7 @@ int run(void) {
 
         long greenInterval = currentMillis - prevMillisGreen;
 
+        /* 120 is 6000 / fadeAmt */
         if (greenInterval > 120 && brightness > 0) {
             prevMillisGreen = currentMillis;
             brightness -= fadeAmt;
@@ -116,7 +120,7 @@ int run(void) {
             blueLedStatus = (blueLedStatus == 0) ? LED_ON : LED_OFF;
             analogWrite(BLUE_LED, blueLedStatus);
         }
-        if (switch2) analogWrite(RED_LED, LED_ON);
+        if (switch2) digitalWrite(RED_LED, HIGH);
     }
 
     return RUN;
@@ -146,9 +150,8 @@ int sleep(void) {
 int diag(void) {
     int i;
     for (i = 0; i < numErrors; ++i) {
-        // TODO should be 500
-        digitalWrite(RED_LED, HIGH); delay(200);
-        digitalWrite(RED_LED, LOW);  delay(200);
+        digitalWrite(RED_LED, HIGH); delay(TWO_HERTZ);
+        digitalWrite(RED_LED, LOW);  delay(TWO_HERTZ);
     }
 
     return RUN;
