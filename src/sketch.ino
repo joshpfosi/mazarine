@@ -18,7 +18,6 @@
 #define DIAG          4
 
 /* misc */
-#define ONE_SEC_DELAY 20
 #define LED_ON        255
 #define LED_OFF       0
 #define SLEEP_DUR     15000
@@ -29,47 +28,14 @@
 #define TWO_HERTZ     250
 #define ONE_HERTZ     500
 
-/* global which tracks diagnostic errors */
+/* global which tracks arbitrary diagnostic errors */
 int numErrors = 5;
 
-/* contains interrupt state */
+/* represents interrupt state */
 int switch1   = FALSE;
 int switch2   = FALSE;
 
-/* state computation */
-int on    (void);
-int off   (void);
-int run   (void);
-int sleep (void);
-int diag  (void);
-
-/* states */
-int (* state[])(void) = { on, off, run, sleep, diag };
-
-/* ISRs */
-void setSwitch1(void);
-void setSwitch2(void);
-
-void setup() {
-    pinMode(RED_LED,   OUTPUT);
-    pinMode(BLUE_LED,  OUTPUT);
-    pinMode(GREEN_LED, OUTPUT);
-
-    pinMode(POTPIN1,   INPUT);
-    pinMode(POTPIN2,   INPUT);
-
-    attachInterrupt(PIN1, setSwitch1, RISING); // NOTE should be FALLING
-    attachInterrupt(PIN2, setSwitch2, RISING);
-}
-
-int curState = ON;
-
-void loop() {
-    curState = state[curState]();
-    if (curState != RUN) digitalWrite(RED_LED, LOW);
-}
-
-/* ---------- STATE FXNS ---------- */
+/* -------------------- STATE FXNS -------------------- */
 
 int on(void) {
     digitalWrite(RED_LED, HIGH); delay(ONE_HERTZ);
@@ -94,6 +60,7 @@ int run(void) {
     while (1) {
         currentMillis = millis();
 
+        /* scale these values so frequencies and brightness are reasonable */
         pot1Val = analogRead(POTPIN1)  / 500.0;
         pot2Val = (analogRead(POTPIN2) / 1023.0) * LED_ON;
 
@@ -130,18 +97,14 @@ int run(void) {
         if (switch2) analogWrite(RED_LED, LED_ON - pot2Val);
 
     }
-
-    return RUN;
 }
 
 int sleep(void) {
-    int i;
+    int i, brightness = LED_ON, fadeAmt = 5;
     for (i = 0; i < 4; ++i) {
         analogWrite(BLUE_LED, LED_ON);  delay(FOUR_HERTZ);
         analogWrite(BLUE_LED, LED_OFF); delay(FOUR_HERTZ);
     }
-
-    int brightness = LED_ON, fadeAmt = 5; 
 
     // fade LED
     while (brightness > 0) {
@@ -165,7 +128,34 @@ int diag(void) {
     return RUN;
 }
 
-/* ---------- ISRs ---------- */
+/* -------------------- ISRs -------------------- */
 
 void setSwitch1(void) { switch1 = true; }
 void setSwitch2(void) { switch2 = switch1; }
+
+/* -------------------- STATE ARRAY -------------------- */
+
+int (* state[])(void) = { on, off, run, sleep, diag };
+
+/* -------------------- SETUP AND LOOP -------------------- */
+
+void setup() {
+    pinMode(RED_LED,   OUTPUT);
+    pinMode(BLUE_LED,  OUTPUT);
+    pinMode(GREEN_LED, OUTPUT);
+
+    pinMode(POTPIN1,   INPUT);
+    pinMode(POTPIN2,   INPUT);
+
+    attachInterrupt(PIN1, setSwitch1, RISING); // NOTE should be FALLING
+    attachInterrupt(PIN2, setSwitch2, RISING);
+}
+
+int curState = ON;
+
+void loop() {
+    curState = state[curState]();
+
+    /* reset if it was turned on */
+    if (curState != RUN) digitalWrite(RED_LED, LOW);
+}
