@@ -9,10 +9,22 @@
 
 #include "motor_control.h"
 
-static int speed;
+/* initialize to some speed */
+static int speed = 5,
+           in1 = 22, in2 = 23, in3 = 24, in4 = 25,
+           e1 = 2, e2 = 3;
+
+/* going to need an init function to initialize pins and speed */
+ 
 
 void forward(void) {
     /* stuff */
+    analogWrite(e1, 255);
+    analogWrite(e1, 255);
+    digitalWrite(in1, HIGH);
+    digitalWrite(in2, LOW);
+    digitalWrite(in3, LOW);
+    digitalWrite(in4, HIGH);
 }
 
 void backward(void) {
@@ -25,7 +37,8 @@ void turn(int angle) {
 }
 
 void stop(void) {
-    /* code to stop bot (enables get 0) */
+    analogWrite(e1, 0);
+    analogWrite(e2, 0);
 }
 
 void set_speed(int s) {
@@ -35,4 +48,10 @@ void set_speed(int s) {
 
 int get_speed(void) {
     return speed;
+}
+
+int speed_to_pwm(int speed) {
+    /* converts angular velocity to pwm value
+     * via some experimentally found constant
+     */
 }
