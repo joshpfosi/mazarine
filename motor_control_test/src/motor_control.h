@@ -2,6 +2,13 @@
  * This file exposes the motor control interface to implement motion control
  */
 
+#define IN1 24
+#define IN2 25
+#define IN3 30
+#define IN4 31
+#define E1  2
+#define E2  3
+
 /* move the bot forward until another call is made */
 void forward(void);
 
