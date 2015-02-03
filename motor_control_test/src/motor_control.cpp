@@ -10,18 +10,31 @@
 #include "Arduino.h"
 #include "motor_control.h"
 
+/* -------------------------- PRIVATE -------------------------- */
+
+#define MAX_SPEED 5
+#define MIN_SPEED 1 
+
 /* initialize to some speed */
-static int speed = 5;
+static int speed = 3;
+
+/* converts angular velocity to pwm value via some experimentally 
+ * found constant
+ */
+static int speed_to_pwm(int s) {
+    if (s < MIN_SPEED || s > MAX_SPEED) s = 3;
+    return 51 * s; /* minimum is 0, max is 255 */
+}
+
+static void enable(void)  { analogWrite(E1, speed); analogWrite(E2, speed); }
+static void disable(void) { analogWrite(E1, 0);     analogWrite(E2, 0);     }
+
+/* -------------------------- INTERFACE -------------------------- */
 
 /* going to need an init function to initialize pins and speed */
 
-static void enable(void) {
-    analogWrite(E1, 30); analogWrite(E2, 30);
-}
-
-static void disable(void) {
-    analogWrite(E1, 0); analogWrite(E2, 0);
-}
+void set_speed(int s) { speed = s;    }
+int  get_speed(void)  { return speed; }
 
 void forward(void) {
     disable();
@@ -66,19 +79,4 @@ void turn(int angle) {
 }
 
 void stop(void) { disable(); }
-
-void set_speed(int s) {
-    speed = s;
-    /* code to actually change speed */
-}
-
-int get_speed(void) {
-    return speed;
-}
-
-int speed_to_pwm(int speed) {
-    /* converts angular velocity to pwm value
-     * via some experimentally found constant
-     */
-}
 

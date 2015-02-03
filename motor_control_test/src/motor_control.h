@@ -9,6 +9,10 @@
 #define E1  2
 #define E2  3
 
+/* sets/gets angular speed of bot tire */
+void set_speed(int s);
+int  get_speed(void);
+
 /* move the bot forward until another call is made */
 void forward(void);
 
@@ -20,7 +24,3 @@ void turn(int angle);
 
 /* stops the bot */
 void stop(void);
-
-/* sets/gets angular speed of bot tire */
-void set_speed(int s);
-int  get_speed(void);
