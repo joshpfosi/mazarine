@@ -22,5 +22,11 @@ void backward(void);
 /* turn the bot angle degrees, and stops */
 void turn(int angle);
 
+// turn bot left until stopped
+void turnLeft(void);
+
+// turn bot right until stopped
+void turnRight(void);
+
 /* stops the bot */
 void stop(void);

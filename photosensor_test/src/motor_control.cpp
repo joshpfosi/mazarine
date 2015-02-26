@@ -70,25 +70,72 @@ void backward(void) {
     enable(false);
 }
 
+// turn both motors in opposite directions to pivot
 void turn(int angle) {
-    stop();
+    disable();
     
     /* these constants were found experimentally */
-    int s = 40, turn_constant = 18;
+    int s = 35, turn_constant = 18;
 
-    if (angle > 0) { /* turn left */
+    if (angle > 0) { // turn left
+        // turn right motor forward
+        digitalWrite(IN1, LOW);
+        digitalWrite(IN2, HIGH);
+
+        // turn left motor backward
         digitalWrite(IN3, LOW);
         digitalWrite(IN4, HIGH);
-        analogWrite(E1, s);
-    } else {
-        digitalWrite(IN2, LOW);
+    } else { // turn right
+        // turn right motor backward
         digitalWrite(IN1, HIGH);
-        analogWrite(E2, s);
+        digitalWrite(IN2, LOW);
+
+        // turn left motor forward
+        digitalWrite(IN3, HIGH);
+        digitalWrite(IN4, LOW);
     }
-    angle = (angle > 0) ? angle : 0 - angle; /* abs(angle) */
-    delay(angle * turn_constant);                       /* measured constant */
+
+    analogWrite(E1, s);
+    analogWrite(E2, s);
+
+    angle = (angle > 0) ? angle : 0 - angle; // abs(angle)
+    delay(angle * turn_constant);            // measured constant
     
-    stop();
+    disable();
+}
+
+void turnLeft(void) {
+    disable();
+    
+    int s = 40;
+
+    // turn right motor forward
+    digitalWrite(IN1, LOW);
+    digitalWrite(IN2, HIGH);
+
+    // turn left motor backward
+    digitalWrite(IN3, LOW);
+    digitalWrite(IN4, HIGH);
+
+    analogWrite(E1, s);
+    analogWrite(E2, s);
+}
+
+void turnRight(void) {
+    disable();
+    
+    int s = 40;
+
+    // turn right motor backward
+    digitalWrite(IN1, HIGH);
+    digitalWrite(IN2, LOW);
+
+    // turn left motor forward
+    digitalWrite(IN3, HIGH);
+    digitalWrite(IN4, LOW);
+
+    analogWrite(E1, s);
+    analogWrite(E2, s);
 }
 
 void stop(void) { disable(); }

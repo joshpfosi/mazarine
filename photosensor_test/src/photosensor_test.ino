@@ -12,18 +12,35 @@
 #define PHOTO_SENSOR A0
 
 static inline bool isBlue  (int red, int blue) { 
-    return (900 < red && red < 1000) &&
+    return (850 < red && red < 1000) &&
            (100 < blue && blue < 200);
 }
 
 static inline bool isRed   (int red, int blue) { 
     return (600 < red && red < 700) &&
-           (500 < blue && blue < 600);
+           (430 < blue && blue < 600);
 }
 
 static inline bool isYellow(int red, int blue) { 
-    return (500 < red && red < 600) &&
+    return (400 < red && red < 600) &&
            (150 < blue && blue < 250);
+}
+
+//
+// Read sensor value for red, blue and both
+//
+static inline void readSensor(int *r, int *b) {
+    digitalWrite(BLUE_LED, LOW);
+    digitalWrite(RED_LED,  HIGH);
+    delay(30);
+    *r = analogRead(PHOTO_SENSOR);
+    
+    digitalWrite(RED_LED,  LOW);
+    digitalWrite(BLUE_LED, HIGH);
+    delay(30);
+    *b = analogRead(PHOTO_SENSOR);
+
+    digitalWrite(BLUE_LED, LOW);
 }
 
 void setup() {
@@ -42,32 +59,14 @@ void setup() {
     pinMode(IN4, OUTPUT);
     pinMode(E1,  OUTPUT);
     pinMode(E2,  OUTPUT);
-
-    Serial.begin(9600);
 }
+
+// global used for 1st test
+static bool sawBlue = false;
 
 void loop() { 
     int red, blue;
 
-    //
-    // Read sensor value for red, blue and both
-    //
-    digitalWrite(BLUE_LED, LOW);
-    digitalWrite(RED_LED,  HIGH);
-    delay(30);
-    red = analogRead(PHOTO_SENSOR);
-    
-    digitalWrite(RED_LED,  LOW);
-    digitalWrite(BLUE_LED, HIGH);
-    delay(30);
-    blue = analogRead(PHOTO_SENSOR);
-
-    digitalWrite(BLUE_LED, LOW);
-    
-    //char msg[100];
-    //sprintf(msg, "red = %d, blue = %d\n", red, blue);
-    //Serial.print(msg);
-    
     //
     // 0. Test by indicator LEDs
     //
@@ -82,32 +81,58 @@ void loop() {
     // 1. Move forward until blue tape
     //
 
-    //forward();
-    //if (isBlue(red, blue)) stop();
+    //readSensor(&red, &blue);
 
-    ////
-    //// 2. Follow a straight blue strip
-    ////
-
-    //while (1) {
-    //    // correct path
-    //    if (!isBlue(red, blue)) {
-    //        // turn left a small amt, and if blue, go straight, else go right
-    //        turn(10);
-    //        red = analogRead(PHOTO_SENSOR);
-    //    }
+    //if (sawBlue)
+    //    stop();
+    //else {
+    //    sawBlue = isBlue(red, blue);
+    //    forward();
     //}
-    //
-    ////
-    //// 3. Follow an arcing blue strip of angle 90 degrees
-    ////
 
+    //
+    // 2. Follow a straight blue strip
+    //
+
+    readSensor(&red, &blue);
+
+    bool turning = false, left = true;
+    int i, prevMillis;
+
+    i = 1;
+    while (!isBlue(red, blue)) {
+        // turn right or left
+        if (!turning) { 
+            prevMillis = millis();
+            (left) ? turnLeft() : turnRight();
+            turning = true; left = !left;
+        }
+
+        // if turned back and forth this much, blue must be gone so stop 
+        while (i > 10) stop();
+
+        // turn other way after 100*i milliseconds
+        if (millis() > (100 * i) + prevMillis) {
+            turning = false; ++i;
+        }
+
+        readSensor(&red, &blue);
+    }
+
+    // invariant: if here, we've found blue
+    forward();
+    
     //
     // 4. Demonstrate detection of colors via turning
     //
-    
+
+    //forward();
+    //readSensor(&red, &blue);
+    //
     //if (isRed(red, blue))    turn(90);
     //if (isBlue(red, blue))   turn(-90);
     //if (isYellow(red,blue))  turn(180);
+    //
+    //forward();
 }
 
