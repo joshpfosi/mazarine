@@ -45,7 +45,6 @@ void front(void) {
     static unsigned long lastInterruptFront;
     unsigned long currTime = millis();
 
-    // ignore interrupts faster than once ever 200 ms
     if (currTime - lastInterruptFront > DEBOUNCE_TIME) {
         state[0] = !state[0];
         lastInterruptFront = currTime;
@@ -59,7 +58,6 @@ void back(void) {
     static unsigned long lastInterruptBack;
     unsigned long currTime = millis();
 
-    // ignore interrupts faster than once ever 200 ms
     if (currTime - lastInterruptBack > DEBOUNCE_TIME) {
         state[1] = !state[1];
         lastInterruptBack = currTime;
@@ -72,7 +70,6 @@ void left(void) {
     static unsigned long lastInterruptLeft;
     unsigned long currTime = millis();
 
-    // ignore interrupts faster than once ever 200 ms
     if (currTime - lastInterruptLeft > DEBOUNCE_TIME) {
         state[2] = !state[2];
         lastInterruptLeft = currTime;
@@ -86,7 +83,6 @@ void right(void) {
     static unsigned long lastInterruptRight;
     unsigned long currTime = millis();
 
-    // ignore interrupts faster than once ever 200 ms
     if (currTime - lastInterruptRight > DEBOUNCE_TIME) {
         state[3] = !state[3];
         // stop
@@ -100,7 +96,6 @@ void frontLeft(void) {
     static unsigned long lastInterruptFrontLeft;
     unsigned long currTime = millis();
 
-    // ignore interrupts faster than once ever 200 ms
     if (currTime - lastInterruptFrontLeft > DEBOUNCE_TIME) {
         state[4] = !state[4];
         // stop
@@ -114,7 +109,6 @@ void frontRight(void) {
     static unsigned long lastInterruptFrontRight;
     unsigned long currTime = millis();
 
-    // ignore interrupts faster than once ever 200 ms
     if (currTime - lastInterruptFrontRight > DEBOUNCE_TIME) {
         state[5] = !state[5];
         lastInterruptFrontRight = currTime;
