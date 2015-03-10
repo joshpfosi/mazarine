@@ -5,6 +5,8 @@
 #define INT4 4 // pin 19
 #define INT5 5 // pin 18
 
+#define DEBOUNCE_TIME 10 // ms
+
 #define LED0 38
 #define LED1 39
 #define LED2 40
@@ -20,12 +22,12 @@ void setup() {
     pinMode(LED4, OUTPUT);
     pinMode(LED5, OUTPUT);
 
-    attachInterrupt(INT0, front,      FALLING);
-    attachInterrupt(INT1, back,       FALLING);
-    attachInterrupt(INT2, left,       FALLING);
-    attachInterrupt(INT3, right,      FALLING);
-    attachInterrupt(INT4, frontLeft,  FALLING);
-    attachInterrupt(INT5, frontRight, FALLING);
+    attachInterrupt(INT0, front,      RISING);
+    attachInterrupt(INT1, back,       RISING);
+    attachInterrupt(INT2, left,       RISING);
+    attachInterrupt(INT3, right,      RISING);
+    attachInterrupt(INT4, frontLeft,  RISING);
+    attachInterrupt(INT5, frontRight, RISING);
 }
 
 volatile int state[6] = { HIGH, HIGH, HIGH, HIGH, HIGH, HIGH };
@@ -40,43 +42,85 @@ void loop() {
 }
 
 void front(void) {
-    state[0] = !state[0];
-    // stop
-    // reverse for 1 sec
-    // turn right 30 deg
+    static unsigned long lastInterruptFront;
+    unsigned long currTime = millis();
+
+    // ignore interrupts faster than once ever 200 ms
+    if (currTime - lastInterruptFront > DEBOUNCE_TIME) {
+        state[0] = !state[0];
+        lastInterruptFront = currTime;
+        // stop
+        // reverse for 1 sec
+        // turn right 30 deg
+    }
 }
 
 void back(void) {
-    state[1] = !state[1];
-    // stop
-    // straight for 0.5 sec
+    static unsigned long lastInterruptBack;
+    unsigned long currTime = millis();
+
+    // ignore interrupts faster than once ever 200 ms
+    if (currTime - lastInterruptBack > DEBOUNCE_TIME) {
+        state[1] = !state[1];
+        lastInterruptBack = currTime;
+        // stop
+        // straight for 0.5 sec
+    }
 }
 
 void left(void) {
-    state[2] = !state[2];
-    // stop
-    // go straight for 0.5 sec
-    // Left again
+    static unsigned long lastInterruptLeft;
+    unsigned long currTime = millis();
+
+    // ignore interrupts faster than once ever 200 ms
+    if (currTime - lastInterruptLeft > DEBOUNCE_TIME) {
+        state[2] = !state[2];
+        lastInterruptLeft = currTime;
+        // stop
+        // go straight for 0.5 sec
+        // Left again
+    }
 }
 
 void right(void) {
-    state[3] = !state[3];
-    // stop
-    // go straight for 0.5 sec
-    // Right again
+    static unsigned long lastInterruptRight;
+    unsigned long currTime = millis();
+
+    // ignore interrupts faster than once ever 200 ms
+    if (currTime - lastInterruptRight > DEBOUNCE_TIME) {
+        state[3] = !state[3];
+        // stop
+        // go straight for 0.5 sec
+        // Right again
+        lastInterruptRight = currTime;
+    }
 }
 
 void frontLeft(void) {
-    state[4] = !state[4];
-    // stop
-    // reverse for 1 sec
-    // turn right 45 deg
+    static unsigned long lastInterruptFrontLeft;
+    unsigned long currTime = millis();
+
+    // ignore interrupts faster than once ever 200 ms
+    if (currTime - lastInterruptFrontLeft > DEBOUNCE_TIME) {
+        state[4] = !state[4];
+        // stop
+        // reverse for 1 sec
+        // turn right 45 deg
+        lastInterruptFrontLeft = currTime;
+    }
 }
 
 void frontRight(void) {
-    state[5] = !state[5];
-    // stop
-    // reverse for 1 sec
-    // turn left 45 deg
+    static unsigned long lastInterruptFrontRight;
+    unsigned long currTime = millis();
+
+    // ignore interrupts faster than once ever 200 ms
+    if (currTime - lastInterruptFrontRight > DEBOUNCE_TIME) {
+        state[5] = !state[5];
+        lastInterruptFrontRight = currTime;
+        // stop
+        // reverse for 1 sec
+        // turn left 45 deg
+    }
 }
 
