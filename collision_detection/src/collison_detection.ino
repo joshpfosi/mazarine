@@ -1,141 +1,55 @@
-////output LEDs
-//int front_left_led = 4;
-//int front_right_led = 5;
-//int side_left_led = 6;
-//int side_right_led= 7;
-//int back_bumper_led = 8;
-//collision flags
-volatile boolean front_left_on = 0;
-volatile boolean front_right_on = 0;
-volatile boolean side_left_on = 0;
-volatile boolean side_right_on = 0;
-volatile boolean back_bumper_on = 0;
+#define NUM_BUMPERS 5
 
-//input pins
-int front_left = A0; //changed
-int front_right = A1;
-int side_left = A4;
-int side_right= A3;
-int back_bumper = A2;
-int switchThreshold = 250;
+// indices into boolean array for each bumper
+// and bumper array for each pin
+#define FRONT_LEFT  0
+#define FRONT_RIGHT 1
+#define LEFT        2
+#define RIGHT       3
+#define BACK        4
 
-//delays and debounce timers
-//long currentTime = 0;
-//int flashDelay = 1000;
-long lastDebounceTime0 = 0;
-long lastDebounceTime1 = 0;
-long lastDebounceTime2 = 0;
-long lastDebounceTime3 = 0;
-long lastDebounceTime4 = 0;
-int debounceDelay = 100;
+// input pins for reading if a bumper is pressed
 
+#define DEBOUNCE_TIME 10 // ms
 
+#define INT0 0 // pin 2
 
-void setup()
-{ 
+static volatile int bumperHit[NUM_BUMPERS];
+static int bumpers[] = { A0, A1, A4, A3, A2 };
+static int leds[]    = { 38, 39, 40, 41, 42 };
 
- //INTERRUPT SETUP
-  attachInterrupt(0, collision_ISR, RISING);
+void setup() { 
+    attachInterrupt(INT0, detectCollision, RISING);
 
-  //INPUT PINS SETUP
-  pinMode(front_left, INPUT);
-  pinMode(front_right, INPUT);
-  pinMode(side_left, INPUT);
-  pinMode(side_right, INPUT);
-  pinMode(back_bumper, INPUT);
-  
-
-  Serial.begin(9600);
+    for (int i = 0; i < NUM_BUMPERS; ++i) pinMode(bumpers[i], INPUT);
 }
- 
+
 void loop()
 {
-   //check if any flags are set and if so, light the appropriate LED
-   if (front_left_on == true)
-   {
-     //handle front left collision
-     Serial.println("front left");
-   }
-   if (front_right_on == true)
-   {
-     //handle front right collision
-     Serial.println("front right");
-   }
-   if (side_left_on == true)
-   {
-     //handle side left collision
-     Serial.println("side left");
-      
-   }
-   if (side_right_on == true)
-   {
-     //handle side right collision
-      Serial.println("side right");
-   }
-   if (back_bumper_on == true)
-   {
-     //handle back bumper collision
-     Serial.println("back");
-   }
-   //reset flags
-   front_left_on = false;
-   front_right_on = false;
-   side_left_on = false;
-   side_right_on = false;
-   back_bumper_on = false;
+    //check if any flags are set and if so, print to serial
+    for (int i = 0; i < NUM_BUMPERS; ++i) {
+        if (bumperHit[i]) {
+            digitalWrite(leds[i], HIGH);
+            bumperHit[i] = false;
+        }
+    }
 
+    delay(1000);
 
-   
+    for (int i = 0; i < NUM_BUMPERS; ++i) digitalWrite(leds[i], LOW);
 }
- 
- 
-void collision_ISR()
-{
-  //Serial.println("ISR");
-  // set collision flags
-  if (millis() - lastDebounceTime0 > debounceDelay) //only enter ISR if debounceDelay ms has passed since last ISR
-  {
-    lastDebounceTime0 = millis();
-    if (analogRead(front_left) > switchThreshold)
-    {
-      front_left_on = true;
+
+
+void detectCollision() {
+    static unsigned long lastInterruptTimes[NUM_BUMPERS];
+
+    unsigned long currTime = millis();
+
+    // check each input for HIGH, setting flag indicating that bumper was hit
+    for (int i = 0; i < NUM_BUMPERS; ++i) {
+        if (currTime - lastInterruptTimes[i] > DEBOUNCE_TIME)
+            // NOTE: potential bug -> HIGH might not map to true but I am
+            //       making this assumption here
+            bumperHit[i] = digitalRead(bumpers[i]);
     }
-  }
-  
-  if (millis() - lastDebounceTime1 > debounceDelay) 
-  {
-    lastDebounceTime1 = millis();
-    if (analogRead(front_right) > switchThreshold)
-    {
-      front_right_on = true;
-    }
-  }
-  
-  if (millis() - lastDebounceTime2 > debounceDelay) 
-  {
-    lastDebounceTime2 = millis();
-    if (analogRead(side_left) > switchThreshold)
-    {
-      side_left_on = true;
-    }
-  }
-  
-  if (millis() - lastDebounceTime3 > debounceDelay)
-  {
-    lastDebounceTime3 = millis();
-    if (analogRead(side_right) > switchThreshold)
-    {
-      side_right_on = true;
-    }
-  }
-  
-  if (millis() - lastDebounceTime4 > debounceDelay)
-  {
-    lastDebounceTime4 = millis();
-    if (analogRead(back_bumper) > switchThreshold)
-    {
-      back_bumper_on = true;
-    }
-  } 
-  
 }
