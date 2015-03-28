@@ -1,13 +1,13 @@
-#define INPIN   22
+#define INPIN   A0
 #define OUTPIN  12
 #define CARRIER 5
 
 #define TIMEOUT       1000
 #define DATA_DELAY    416  //  1/(1.2*10^3)/2 = 416 aka 1.2 kHz
 #define PROTOCOL_LEN  24
-#define READ_LEN      1000 // length of time to read for 1's to determine
+#define READ_LEN      10 // length of time to read for 1's to determine
                            // if we're reading a 1 or a 0
-#define ONE_THRESHOLD 140
+#define ONE_THRESHOLD 600
 
 void setup()
 {
@@ -15,7 +15,7 @@ void setup()
     pinMode(OUTPIN, OUTPUT);
 
     pinMode(CARRIER, OUTPUT); 
-    //Serial.begin(9600); Serial1.begin(1200);
+    Serial.begin(9600);
     TCCR3A = _BV(COM3A0) | _BV(COM3B0) | _BV(WGM30) | _BV(WGM31);
     // sets COM Output Mode to FastPWM with toggle of OC3A on compare match with OCR3A
     // also sets WGM to mode 15: FastPWM with top set by OCR3A
@@ -31,13 +31,12 @@ void setup()
 }
 
 unsigned msg[] = { 
-    1,1,0,0,1,1,1,0,
-    1,1,0,0,1,1,1,0,
-    1,1,0,0,1,1,1,0,
+    1,1,1,1,0,0,0,0
 };
 
 void loop() {
     receive();
+    //transmit(msg, 8);
 }
 
 /* transmits num 1s by flashing LED */
@@ -54,18 +53,11 @@ void receive(void) {
     unsigned long start = millis();
 
     while (1) {
-        bool readOne = false;
-
-        unsigned long before = millis();
-        for (int i = 0; i < READ_LEN; ++i) {
-            if (analogRead(INPUT) > ONE_THRESHOLD) readOne = true;
+        if ((millis() - start) > (2*DATA_DELAY)/1000) {
+          Serial.println(analogRead(INPIN));
+          start = millis();
         }
-        unsigned long after = millis();
-        
-        delayMicroseconds(2 * DATA_DELAY - (after - before));
-
-        if (readOne) Serial.print("Read a 1");
-        else         Serial.print("Read a 0");
+        //if (analogRead(INPIN) > ONE_THRESHOLD) Serial.print("Read a 1\n");
+        //else                                   Serial.print("Read a 0\n");
     }
 }
-
