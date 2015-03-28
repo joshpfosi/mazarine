@@ -25,19 +25,19 @@ void loop() {
     backward();
     delay(3000);
 
-    set_speed(2);
-    delay(3000);
-    forward();
-    delay(3000);
-    stop();
-    delay(1000);
-    backward();
-    delay(3000);
+    //set_speed(2);
+    //delay(3000);
+    //forward();
+    //delay(3000);
+    //stop();
+    //delay(1000);
+    //backward();
+    //delay(3000);
 
-    stop();
-    turn(90);
-    delay(500);
-    turn(-90);
-    delay(500);
-    turn(180);
+    //stop();
+    //turn(90);
+    //delay(500);
+    //turn(-90);
+    //delay(500);
+    //turn(180);
 }
