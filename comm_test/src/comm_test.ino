@@ -13,7 +13,7 @@ void setup()
     pinMode(OUTPIN, OUTPUT);
 
     pinMode(CARRIER, OUTPUT); 
-    //Serial.begin(9600); Serial1.begin(1200);
+    Serial.begin(9600);
     TCCR3A = _BV(COM3A0) | _BV(COM3B0) | _BV(WGM30) | _BV(WGM31);
     // sets COM Output Mode to FastPWM with toggle of OC3A on compare match with OCR3A
     // also sets WGM to mode 15: FastPWM with top set by OCR3A
