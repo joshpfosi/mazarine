@@ -5,8 +5,6 @@
 #define TIMEOUT       1000
 #define DATA_DELAY    416  //  1/(1.2*10^3)/2 = 416 aka 1.2 kHz
 #define PROTOCOL_LEN  24
-#define READ_LEN      1000 // length of time to read for 1's to determine
-                           // if we're reading a 1 or a 0
 #define ONE_THRESHOLD 140
 
 void setup()
@@ -36,12 +34,27 @@ unsigned msg[] = {
     1,1,0,0,1,1,1,0,
 };
 
+unsigned recMsg[] = {
+    0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,
+};
+
 void loop() {
-    receive();
+    unsigned len = 24;
+    receive(recMsg, len);
+
+    Serial.print("recMsg=");
+    for (int i = 0; i < len; ++i) {
+        Serial.print(recMsg[i]);
+    }
+    Serial.print("\n");
+    delay(1000);
+    //transmit(msg, len);
 }
 
 /* transmits num 1s by flashing LED */
-void transmit(unsigned *bits, unsigned len) {
+void transmit(unsigned bits[], unsigned len) {
     for (unsigned i = 0; i < len; ++i) {
         digitalWrite(OUTPIN, (bits[i]) ? HIGH : LOW);
         delayMicroseconds(2 * DATA_DELAY);
@@ -50,22 +63,10 @@ void transmit(unsigned *bits, unsigned len) {
     digitalWrite(OUTPIN, LOW); // ensure low afterwards
 }
 
-void receive(void) {
-    unsigned long start = millis();
-
-    while (1) {
-        bool readOne = false;
-
-        unsigned long before = millis();
-        for (int i = 0; i < READ_LEN; ++i) {
-            if (analogRead(INPUT) > ONE_THRESHOLD) readOne = true;
-        }
-        unsigned long after = millis();
-        
-        delayMicroseconds(2 * DATA_DELAY - (after - before));
-
-        if (readOne) Serial.print("Read a 1");
-        else         Serial.print("Read a 0");
+void receive(unsigned bits[], unsigned len) {
+    for (unsigned i = 0; i < len; ++i) {
+        bits[i] = (analogRead(INPUT) > ONE_THRESHOLD);
+        delayMicroseconds(2 * DATA_DELAY);
     }
 }
 
