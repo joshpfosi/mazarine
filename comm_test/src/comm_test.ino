@@ -1,27 +1,29 @@
-#define INPIN   22
-#define OUTPIN  12
-#define CARRIER 5
+#define WAITINGPIN    0
+#define RECEIVINGPIN  1
+#define ANALOGDATAPIN A0
+#define OUTPIN        12
+#define CARRIER       5
 
 #define TIMEOUT       1000
 #define DATA_DELAY    416  //  1/(1.2*10^3)/2 = 416 aka 1.2 kHz
-#define PROTOCOL_LEN  24
-#define ONE_THRESHOLD 140
+#define ONE_THRESHOLD 800
 #define BIT_SIZE      25
 #define MSG_LEN       8
 
-const static bool receivingBot = false; // change for Arduino
+const static bool receivingBot = true; // change for Arduino
 static bool waiting            = false;
 static bool receiving          = false;
 
 void setup()
 {
-    pinMode(INPIN,  INPUT);
+    pinMode(RECEIVINGPIN,  INPUT);
+    pinMode(ANALOGDATAPIN, INPUT);
     pinMode(OUTPIN, OUTPUT);
     
     // use interrupts on the input comm pin to manage state of communication subsystem
-    attachInterrupt(INPIN, setWaiting, RISING);
-    attachInterrupt(INPIN, setReceiving, FALLING);
-
+    attachInterrupt(RECEIVINGPIN, setReceiving, FALLING);
+    attachInterrupt(WAITINGPIN, setWaiting, RISING);
+   
     pinMode(CARRIER, OUTPUT); 
     Serial.begin(9600);
     TCCR3A = _BV(COM3A0) | _BV(COM3B0) | _BV(WGM30) | _BV(WGM31);
@@ -52,17 +54,21 @@ unsigned hsMsg[] = {
 
 void setWaiting(void) {
   if (!waiting) waiting = true;
+  //Serial.println("setwaiting");
 }
 
 void setReceiving(void) {
   if (!receiving && waiting) receiving = true;
+  //Serial.println("setreceiving");
 }
 
 void loop() {
   if (receivingBot) {
     // execute code to anticipate and respond to messages
-    while (!waiting && !receiving) {} // idle until we see a handshake
-    while (waiting &&  !receiving) {} // do nothing until falling edge
+    while (!waiting && !receiving) {delayMicroseconds(1);} // idle until we see a handshake
+    while (waiting &&  !receiving) {delayMicroseconds(1);} // do nothing until falling edge
+    
+    Serial.println("receive");
     
     // if here, we've seen a waiting falling edge AND a receiving rising edge
     receive(recMsg, MSG_LEN);
@@ -76,7 +82,7 @@ void loop() {
   else {
     // execute code to transmit a regular message
     transmit(msg, MSG_LEN);
-    //delay(3000);
+    //delay(1000);
   }
 }
 
@@ -104,7 +110,8 @@ void receive(unsigned bits[], unsigned len) {
       unsigned sum = 0;
       for (unsigned j = 0; j < BIT_SIZE; ++j) {
         // read all 25 bits, recording sum
-        sum += digitalRead(INPUT);
+        int x = analogRead(ANALOGDATAPIN);
+        sum += (x > ONE_THRESHOLD);
         delayMicroseconds(2 * DATA_DELAY);
       }
       // average sum of 25 bits, adding value to bit[i]
@@ -112,3 +119,5 @@ void receive(unsigned bits[], unsigned len) {
     }
     receiving = false; // we are done receiving
 }
+
+
