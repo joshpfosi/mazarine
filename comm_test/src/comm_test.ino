@@ -6,7 +6,7 @@
 #define BIT_SIZE     25
 #define MSG_LEN      8
 
-const static bool receivingBot = false;
+const static bool receivingBot = true;
 static bool receiving          = false;
 
 void setup()
@@ -33,7 +33,8 @@ void setup()
 }
 
 unsigned hsMsg[] = { 1,1,1,1,0,0,0,0 };
-unsigned msg[] =   { 1,1,0,0,1,1,1,0 };
+unsigned transMsg[] =   { 1,1,0,0,1,1,1,0 };
+unsigned ack[] =   { 0,0,0,0,1,1,1,1 };
 
 unsigned recMsg[] = { 0,0,0,0,0,0,0,0,
                       0,0,0,0,0,0,0,0 };
@@ -54,11 +55,25 @@ void loop() {
     Serial.print("\n");
   }
   else {
-    // execute code to transmit a regular message
-    transmit(msg, MSG_LEN);
-    delay(3000);
+    // execute code to anticipate and respond to messages
+    transmit(transMsg, MSG_LEN);
+    while (!receiving) { // execute code to transmit a regular message
+      delayMicroseconds(1);
+    } // transmit until acknowledgement
+    
+    // if here, we've seen a waiting falling edge AND a receiving rising edge
+    receive(recMsg, MSG_LEN);
+    
+    // testing only
+    for (int i = 0; i < 2 * MSG_LEN; ++i) Serial.println(recMsg[i]);
+
+    Serial.print("\n");
+    
+    delay(5000);
   }
 }
+
+//UNIFY THE UNITS OF MESSAGE LENGTH (len = MSG_LEN)!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 /* transmits num 1s by flashing LED */
 void transmit(unsigned msg[], unsigned len) {
@@ -72,7 +87,7 @@ void sendBits(unsigned bits[], unsigned len) {
       for (unsigned j = 0; j < BIT_SIZE; ++j) {
         digitalWrite(TRANSMIT_PIN, (bits[i]) ? HIGH : LOW);
         delayMicroseconds(DATA_DELAY); 
-      }     
+      }    
     }
 }
 
@@ -89,4 +104,5 @@ void receive(unsigned bits[], unsigned len) {
       bits[i] = ((float)sum / BIT_SIZE > 0.5);
     }
     receiving = false; // we are receiving, not waiting
+    if (receivingBot) transmit(ack, MSG_LEN);
 }
