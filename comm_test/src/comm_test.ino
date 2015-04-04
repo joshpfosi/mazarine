@@ -5,9 +5,10 @@
 #define DATA_DELAY   416  //  1/(1.2*10^3)/2 = 416 aka 1.2 kHz
 #define BIT_SIZE     25
 #define MSG_LEN      8
+#define TIMEOUT      1000
 
-const static bool receivingBot = true;
-static bool receiving          = false;
+static bool receivingBot = false;
+static bool receiving    = false;
 
 void setup()
 {
@@ -42,6 +43,11 @@ unsigned recMsg[] = { 0,0,0,0,0,0,0,0,
 void setReceiving(void) { if (!receiving) receiving = true; }
 
 void loop() {
+  //static unsigned long lastTime;
+  //unsigned long currTime = millis();
+  
+  //if (currTime - lastTime > 5000) receivingBot = !receivingBot;
+  
   if (receivingBot) {
     // execute code to anticipate and respond to messages
     while (!receiving) { delayMicroseconds(1); } // idle until we see a handshake
@@ -54,26 +60,28 @@ void loop() {
 
     Serial.print("\n");
   }
-  else {
+  else { //TRANSMITTING BOT
+    unsigned long currTime = millis();
+  
     // execute code to anticipate and respond to messages
+    
     transmit(transMsg, MSG_LEN);
-    while (!receiving) { // execute code to transmit a regular message
+    while (!receiving) {
+      while (millis() - currTime > TIMEOUT) { // execute code to transmit a regular message
+        transmit(transMsg, MSG_LEN);
+        currTime = millis();
+      } // wait until acknowledgement
       delayMicroseconds(1);
-    } // transmit until acknowledgement
-    
-    // if here, we've seen a waiting falling edge AND a receiving rising edge
+    }
     receive(recMsg, MSG_LEN);
-    
     // testing only
     for (int i = 0; i < 2 * MSG_LEN; ++i) Serial.println(recMsg[i]);
 
     Serial.print("\n");
     
-    delay(5000);
+    delay(500);
   }
 }
-
-//UNIFY THE UNITS OF MESSAGE LENGTH (len = MSG_LEN)!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 /* transmits num 1s by flashing LED */
 void transmit(unsigned msg[], unsigned len) {
@@ -106,3 +114,4 @@ void receive(unsigned bits[], unsigned len) {
     receiving = false; // we are receiving, not waiting
     if (receivingBot) transmit(ack, MSG_LEN);
 }
+
