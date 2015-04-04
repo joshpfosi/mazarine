@@ -7,11 +7,10 @@
 #define MSG_LEN      8
 #define TIMEOUT      1000
 
-static bool receivingBot = false;
+static bool receivingBot = true; //COM 9 receiving --> true; COM 12 transmitting --> false
 static bool receiving    = false;
 
-void setup()
-{
+void setup() {
     pinMode(RECEIVE_PIN,  INPUT);
     pinMode(TRANSMIT_PIN, OUTPUT);
     pinMode(CARRIER,      OUTPUT);
@@ -30,24 +29,17 @@ void setup()
     OCR3A = 55; // Used to be 63
     // above sets the counter value at which register resets to 0x0000;
     // generate 20kHz when OCR3A=50
-
 }
 
-unsigned hsMsg[] = { 1,1,1,1,0,0,0,0 };
+unsigned hsMsg[]    =   { 1,1,1,1,0,0,0,0 };
 unsigned transMsg[] =   { 1,1,0,0,1,1,1,0 };
-unsigned ack[] =   { 0,0,0,0,1,1,1,1 };
+unsigned ack[]      =   { 0,0,0,0,1,1,1,1 };
+unsigned recMsg[]   =   { 0,0,0,0,0,0,0,0,
+                          0,0,0,0,0,0,0,0 };
 
-unsigned recMsg[] = { 0,0,0,0,0,0,0,0,
-                      0,0,0,0,0,0,0,0 };
-
-void setReceiving(void) { if (!receiving) receiving = true; }
+void setReceiving(void) { receiving = true; }
 
 void loop() {
-  //static unsigned long lastTime;
-  //unsigned long currTime = millis();
-  
-  //if (currTime - lastTime > 5000) receivingBot = !receivingBot;
-  
   if (receivingBot) {
     // execute code to anticipate and respond to messages
     while (!receiving) { delayMicroseconds(1); } // idle until we see a handshake
@@ -56,34 +48,33 @@ void loop() {
     receive(recMsg, MSG_LEN);
     
     // testing only
-    for (int i = 0; i < 2 * MSG_LEN; ++i) Serial.println(recMsg[i]);
+    for (int i = 0; i < 2 * MSG_LEN; ++i) Serial.print(recMsg[i]);
 
-    Serial.print("\n");
+    Serial.print("\n"); 
   }
   else { //TRANSMITTING BOT
     unsigned long currTime = millis();
   
-    // execute code to anticipate and respond to messages
-    
     transmit(transMsg, MSG_LEN);
     while (!receiving) {
-      while (millis() - currTime > TIMEOUT) { // execute code to transmit a regular message
+      if (millis() - currTime > TIMEOUT) { // execute code to transmit a regular message
         transmit(transMsg, MSG_LEN);
         currTime = millis();
       } // wait until acknowledgement
       delayMicroseconds(1);
     }
     receive(recMsg, MSG_LEN);
-    // testing only
-    for (int i = 0; i < 2 * MSG_LEN; ++i) Serial.println(recMsg[i]);
-
-    Serial.print("\n");
     
-    delay(500);
+    if (checkMsg(recMsg, ack, MSG_LEN)) {
+      // testing only
+      for (int i = 0; i < 2 * MSG_LEN; ++i) Serial.print(recMsg[i]);
+      Serial.print("\n");
+          
+      delay(2000);
+    }
   }
 }
 
-/* transmits num 1s by flashing LED */
 void transmit(unsigned msg[], unsigned len) {
   sendBits(hsMsg, MSG_LEN); // sending handshake so other bot knows message is coming
   sendBits(msg, len);
@@ -113,5 +104,15 @@ void receive(unsigned bits[], unsigned len) {
     }
     receiving = false; // we are receiving, not waiting
     if (receivingBot) transmit(ack, MSG_LEN);
+}
+
+bool checkMsg(unsigned msgToCheck[], unsigned correctMsg[], unsigned len) {
+    unsigned i;
+    for (i = 0; i < len; ++i) {
+        if (hsMsg[i] != msgToCheck[i] || msgToCheck[i+len] != correctMsg[i]) {
+          return false;
+        }
+    }
+    return true;
 }
 
