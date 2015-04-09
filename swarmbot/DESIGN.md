@@ -9,7 +9,7 @@
 
 #### ON State
 
-Infinite loop which reads and sets a boolean reflecting which bot (1 or 2) our bot is. The loop is broken only by a `HIGH` input on pin `GO_SWITCH`, transition to `SEEK_WALL`
+Infinite loop which reads and sets a boolean reflecting which bot (1 or 2) our bot is. The loop is broken only by a `HIGH` input on pin `GO_SWITCH` causing a transition to `GO`.
 
 #### GO State
 
@@ -81,34 +81,4 @@ Sequential code to run through the task, making bot specific decisions based on 
 
 ## Pin Mapping
 
-### Interrupt Pins
-
-```
-#define COLLISION_INT 2
-#define COMM_INT      3
-```
-
-### Digital Pins
-
-```
-#define GO_SWITCH     1
-#define BOT_SWITCH    2
-#define RED_LED       3
-#define YELLOW_LED    4
-#define GREEN_LED     5
-#define BLUE_LED      6
-
-#define ML1           30
-#define ML2           31
-#define MR1           32
-#define MR2           33
-
-```
-
-### Analog Pins
-
-```
-#define E1            1
-#define E2            2
-```
-
+See `pinmap.h` for definitions.

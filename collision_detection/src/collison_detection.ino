@@ -10,15 +10,17 @@
 
 // input pins for reading if a bumper is pressed
 
-#define DEBOUNCE_TIME 100 // ms
+#define DEBOUNCE_TIME 10000 // ms
 
 #define INT0 0 // pin 2
 
+static volatile bool collisionHappened = false;
 static volatile bool bumperHit[NUM_BUMPERS];
 static int bumpers[] = { 43, 44, 45, 46, 47 };
 static int leds[]    = { 38, 39, 40, 41, 42 };
 
 void setup() {
+    Serial.begin(9600);
     attachInterrupt(INT0, detectCollision, RISING);
 
     for (int i = 0; i < NUM_BUMPERS; ++i) {
@@ -27,32 +29,29 @@ void setup() {
     }
 }
 
-void loop()
-{
-    for (int i = 0; i < NUM_BUMPERS; ++i) {
-        if (bumperHit[i]) {
-            digitalWrite(leds[i], HIGH);
-            bumperHit[i] = false;
+void loop() {
+    // check each input for HIGH, setting flag indicating that bumper was hit
+    if (collisionHappened) {
+        for (int i = 0; i < NUM_BUMPERS; ++i) {
+            bumperHit[i] = digitalRead(bumpers[i]);
+
+            if (bumperHit[i]) {
+                Serial.println("Led on");
+                Serial.println(i);
+                bumperHit[i] = false;
+            }
         }
     }
-
-    delay(1000);
-
-    for (int i = 0; i < NUM_BUMPERS; ++i) digitalWrite(leds[i], LOW);
 }
 
 
 void detectCollision() {
-    static unsigned long lastInterruptTimes[NUM_BUMPERS];
+    static unsigned long lastInterruptTime;
+    unsigned long currTime = micros();
 
-    unsigned long currTime = millis();
-
-    // check each input for HIGH, setting flag indicating that bumper was hit
-    for (int i = 0; i < NUM_BUMPERS; ++i) {
-        if (currTime - lastInterruptTimes[i] > DEBOUNCE_TIME) {
-            bumperHit[i] = (digitalRead(bumpers[i]) == HIGH);
-            if (bumperHit[i]) lastInterruptTimes[i] = currTime;
-        }
+    if (currTime - lastInterruptTime > DEBOUNCE_TIME) {
+        collisionHappened = !collisionHappened;
+        lastInterruptTime = currTime;
     }
 }
 
