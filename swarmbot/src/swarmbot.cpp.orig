@@ -1,7 +1,12 @@
 #include "pinmap.h"
 #include "photo_sensor.h"
+<<<<<<< HEAD:swarmbot/src/swarmbot.cpp
+//#include "collision.h"
+//#include "Arduino.h"
+=======
 #include "collision.h"
 #include "motor_control.h"
+>>>>>>> df24d78835fbf9f2dbba4b3179b8da3ec09ccb47:swarmbot/src/swarmbot.ino
 
 // ----------------------------------------------------------------------------
 // State variables
@@ -9,7 +14,34 @@ static bool isBot1  = true;
 static bool hitWall = false;
 // ----------------------------------------------------------------------------
 
+#define NUM_BUMPERS 5
 
+// indices into boolean array for each bumper
+// and bumper array for each pin
+#define FRONT_LEFT  0
+#define FRONT_RIGHT 1
+#define LEFT        2
+#define RIGHT       3
+#define BACK        4
+
+#define DEBOUNCE_TIME 10000 // ms
+
+bool bumperHit[NUM_BUMPERS];
+bool collisionHappened;
+const int bumpers[] = { FL, FR, L, R, B };
+
+void detectCollision() {
+    static unsigned long lastInterruptTime;
+    unsigned long currTime = micros();
+
+    if (currTime - lastInterruptTime > DEBOUNCE_TIME) {
+        collisionHappened = !collisionHappened;
+        lastInterruptTime = currTime;
+    }
+}
+
+<<<<<<< HEAD:swarmbot/src/swarmbot.cpp
+=======
 //#define NUM_BUMPERS 5
 //#define DEBOUNCE_TIME 10000 // ms
 //
@@ -27,17 +59,28 @@ static bool hitWall = false;
 //volatile bool collisionHappened = false;
 //const int bumpers[] = { FL, FR, L, R, B };
 //
+>>>>>>> df24d78835fbf9f2dbba4b3179b8da3ec09ccb47:swarmbot/src/swarmbot.ino
 //void setupCollision(void) {
+//    attachInterrupt(COLLISION_INT, detectCollision, RISING);
 //    for (int i = 0; i < NUM_BUMPERS; ++i) pinMode(bumpers[i], INPUT);
 //}
-//
+
 void setup() {
+    Serial.begin(9600);
+
     // ------------------------------------------------------------------------
     // Set up general Bot pins
     pinMode( GO_SWITCH,  INPUT);
     pinMode( BOT_SWITCH, INPUT);
     // ------------------------------------------------------------------------
 
+<<<<<<< HEAD:swarmbot/src/swarmbot.cpp
+    setupPhotosensor();
+    //setupCollision();
+
+    attachInterrupt(COLLISION_INT, detectCollision, RISING);
+    for (int i = 0; i < NUM_BUMPERS; ++i) pinMode(bumpers[i], INPUT);
+=======
     Serial.begin(9600);
 
     //setupPhotosensor();
@@ -50,26 +93,24 @@ void setup() {
     //setupCollision();
     //
     attachInterrupt(0, detectCollision, CHANGE);
+>>>>>>> df24d78835fbf9f2dbba4b3179b8da3ec09ccb47:swarmbot/src/swarmbot.ino
 }
-//
-//void detectCollision(void) {
-//    Serial.println("in loop");
-//    static unsigned long lastInterruptTime;
-//    unsigned long currTime = micros();
-//
-//    if (currTime - lastInterruptTime > DEBOUNCE_TIME) {
-//        collisionHappened = true;
-//        lastInterruptTime = currTime;
-//    }
-//}
 
 void loop() {
+<<<<<<< HEAD:swarmbot/src/swarmbot.cpp
+    // check each input for HIGH, setting flag indicating that bumper was hit
+    if (collisionHappened) {
+        for (int i = 0; i < NUM_BUMPERS; ++i) {
+            bumperHit[i] = digitalRead(bumpers[i]);
+
+=======
     //test();
     if (collisionHappened) {
         Serial.println("collision Happened");
         for (int i = 0; i < NUM_BUMPERS; ++i) {
             bumperHit[i] = digitalRead(bumpers[i]);
     
+>>>>>>> df24d78835fbf9f2dbba4b3179b8da3ec09ccb47:swarmbot/src/swarmbot.ino
             if (bumperHit[i]) {
                 Serial.println(i);
                 bumperHit[i] = false;
