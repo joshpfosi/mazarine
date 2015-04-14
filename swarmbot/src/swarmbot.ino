@@ -1,6 +1,6 @@
 #include "pinmap.h"
 #include "photo_sensor.h"
-//#include "collision.h"
+#include "collision.h"
 #include "motor_control.h"
 
 // ----------------------------------------------------------------------------
@@ -14,7 +14,7 @@ static bool hitWall = false;
 //#define DEBOUNCE_TIME 10000 // ms
 //
 //// indices into boolean array for each bumper
-//// and bumper array for each pin
+/// and bumper array for each pin
 //#define FRONT_LEFT  0
 //#define FRONT_RIGHT 1
 //#define LEFT        2
@@ -40,7 +40,6 @@ void setup() {
 
     Serial.begin(9600);
 
-
     //setupPhotosensor();
     pinMode(PHOTO_RED_LEFT,   OUTPUT);
     pinMode(PHOTO_RED_RIGHT,  OUTPUT);
@@ -50,7 +49,7 @@ void setup() {
     pinMode(PHOTORIGHT,       INPUT);
     //setupCollision();
     //
-    //attachInterrupt(0, detectCollision, CHANGE);
+    attachInterrupt(0, detectCollision, CHANGE);
 }
 //
 //void detectCollision(void) {
@@ -65,18 +64,18 @@ void setup() {
 //}
 
 void loop() {
-    test();
-    //if (collisionHappened) {
-    //    Serial.println("collision Happened");
-    //    for (int i = 0; i < NUM_BUMPERS; ++i) {
-    //        bumperHit[i] = digitalRead(bumpers[i]);
-    //
-    //        if (bumperHit[i]) {
-    //            Serial.println(i);
-    //            bumperHit[i] = false;
-    //        }
-    //    }
-    //}
+    //test();
+    if (collisionHappened) {
+        Serial.println("collision Happened");
+        for (int i = 0; i < NUM_BUMPERS; ++i) {
+            bumperHit[i] = digitalRead(bumpers[i]);
+    
+            if (bumperHit[i]) {
+                Serial.println(i);
+                bumperHit[i] = false;
+            }
+        }
+    }
     //while (!digitalRead(GO_SWITCH)) { delayMicroseconds(1); } // ON
 
     //isBot1 = digitalRead(BOT_SWITCH);
