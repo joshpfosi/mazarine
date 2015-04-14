@@ -19,7 +19,4 @@ bool bumperHit[NUM_BUMPERS];
 bool collisionHappened;
 const int bumpers[] = { FL, FR, L, R, B };
 
-void setupCollision(void);
-void detectCollision(void);
-
 #endif // COLLISION_H

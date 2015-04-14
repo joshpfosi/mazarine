@@ -1,4 +1,4 @@
-#define NUM_BUMPERS 5
+#define NUM_BUMPERS 6
 
 // indices into boolean array for each bumper
 // and bumper array for each pin
@@ -16,7 +16,7 @@
 
 static volatile bool collisionHappened = false;
 static volatile bool bumperHit[NUM_BUMPERS];
-static int bumpers[] = { 43, 44, 45, 46, 47 };
+static int bumpers[] = { 43, 44, 45, 46, 47, 48 };
 static int leds[]    = { 38, 39, 40, 41, 42 };
 
 void setup() {
@@ -36,7 +36,6 @@ void loop() {
             bumperHit[i] = digitalRead(bumpers[i]);
 
             if (bumperHit[i]) {
-                Serial.println("Led on");
                 Serial.println(i);
                 bumperHit[i] = false;
             }

@@ -73,7 +73,7 @@ inline void readRightSensor(int *r, int *b) {
 //
 // Test calibration by serial printing colors
 //
-void test(void) {
+void testPhotosensor(void) {
     int red, blue;
 
     readLeftSensor(&red, &blue);

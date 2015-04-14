@@ -13,8 +13,8 @@
 
 // Overall pins TODO new name
 
-#define GO_SWITCH        1
-#define BOT_SWITCH       1
+#define GO_SWITCH        14
+#define BOT_SWITCH       15
 #define RED_LED          1
 #define YELLOW_LED       1
 #define GREEN_LED        1
@@ -22,10 +22,10 @@
 
 // Photosensor pins
 
-#define PHOTO_RED_LEFT   2
-#define PHOTO_RED_RIGHT  3
-#define PHOTO_BLUE_LEFT  4
-#define PHOTO_BLUE_RIGHT 5
+#define PHOTO_RED_LEFT   10
+#define PHOTO_RED_RIGHT  11
+#define PHOTO_BLUE_LEFT  12
+#define PHOTO_BLUE_RIGHT 13
 
 #define PHOTOLEFT        A0
 #define PHOTORIGHT       A1

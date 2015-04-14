@@ -1,7 +1,7 @@
 #include "pinmap.h"
 #include "photo_sensor.h"
 //#include "collision.h"
-#include "motor_control.h"
+//#include "Arduino.h"
 
 // ----------------------------------------------------------------------------
 // State variables
@@ -9,74 +9,65 @@ static bool isBot1  = true;
 static bool hitWall = false;
 // ----------------------------------------------------------------------------
 
+#define NUM_BUMPERS 5
 
-//#define NUM_BUMPERS 5
-//#define DEBOUNCE_TIME 10000 // ms
-//
-//// indices into boolean array for each bumper
-//// and bumper array for each pin
-//#define FRONT_LEFT  0
-//#define FRONT_RIGHT 1
-//#define LEFT        2
-//#define RIGHT       3
-//#define BACK        4
-//
-//// input pins for reading if a bumper is pressed
-//
-//bool bumperHit[NUM_BUMPERS];
-//volatile bool collisionHappened = false;
-//const int bumpers[] = { FL, FR, L, R, B };
-//
+// indices into boolean array for each bumper
+// and bumper array for each pin
+#define FRONT_LEFT  0
+#define FRONT_RIGHT 1
+#define LEFT        2
+#define RIGHT       3
+#define BACK        4
+
+#define DEBOUNCE_TIME 10000 // ms
+
+bool bumperHit[NUM_BUMPERS];
+bool collisionHappened;
+const int bumpers[] = { FL, FR, L, R, B };
+
+void detectCollision() {
+    static unsigned long lastInterruptTime;
+    unsigned long currTime = micros();
+
+    if (currTime - lastInterruptTime > DEBOUNCE_TIME) {
+        collisionHappened = !collisionHappened;
+        lastInterruptTime = currTime;
+    }
+}
+
 //void setupCollision(void) {
+//    attachInterrupt(COLLISION_INT, detectCollision, RISING);
 //    for (int i = 0; i < NUM_BUMPERS; ++i) pinMode(bumpers[i], INPUT);
 //}
-//
+
 void setup() {
+    Serial.begin(9600);
+
     // ------------------------------------------------------------------------
     // Set up general Bot pins
     pinMode( GO_SWITCH,  INPUT);
     pinMode( BOT_SWITCH, INPUT);
     // ------------------------------------------------------------------------
 
-    Serial.begin(9600);
-
-
-    //setupPhotosensor();
-    pinMode(PHOTO_RED_LEFT,   OUTPUT);
-    pinMode(PHOTO_RED_RIGHT,  OUTPUT);
-    pinMode(PHOTO_BLUE_LEFT,  OUTPUT);
-    pinMode(PHOTO_BLUE_RIGHT, OUTPUT);
-    pinMode(PHOTOLEFT,        INPUT);
-    pinMode(PHOTORIGHT,       INPUT);
+    setupPhotosensor();
     //setupCollision();
-    //
-    //attachInterrupt(0, detectCollision, CHANGE);
+
+    attachInterrupt(COLLISION_INT, detectCollision, RISING);
+    for (int i = 0; i < NUM_BUMPERS; ++i) pinMode(bumpers[i], INPUT);
 }
-//
-//void detectCollision(void) {
-//    Serial.println("in loop");
-//    static unsigned long lastInterruptTime;
-//    unsigned long currTime = micros();
-//
-//    if (currTime - lastInterruptTime > DEBOUNCE_TIME) {
-//        collisionHappened = true;
-//        lastInterruptTime = currTime;
-//    }
-//}
 
 void loop() {
-    test();
-    //if (collisionHappened) {
-    //    Serial.println("collision Happened");
-    //    for (int i = 0; i < NUM_BUMPERS; ++i) {
-    //        bumperHit[i] = digitalRead(bumpers[i]);
-    //
-    //        if (bumperHit[i]) {
-    //            Serial.println(i);
-    //            bumperHit[i] = false;
-    //        }
-    //    }
-    //}
+    // check each input for HIGH, setting flag indicating that bumper was hit
+    if (collisionHappened) {
+        for (int i = 0; i < NUM_BUMPERS; ++i) {
+            bumperHit[i] = digitalRead(bumpers[i]);
+
+            if (bumperHit[i]) {
+                Serial.println(i);
+                bumperHit[i] = false;
+            }
+        }
+    }
     //while (!digitalRead(GO_SWITCH)) { delayMicroseconds(1); } // ON
 
     //isBot1 = digitalRead(BOT_SWITCH);
