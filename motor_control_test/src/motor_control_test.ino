@@ -16,15 +16,16 @@ void setup() {
 
 void loop() {
     /* call all the functions */
-    set_speed(1);
-    delay(3000);
+    set_speed(5);
+    delay(300);
     forward();
-    delay(3000);
+    delay(300);
     stop();
     delay(1000);
     backward();
+    delay(300);
+    set_speed(3);
     delay(3000);
-
     //set_speed(2);
     //delay(3000);
     //forward();

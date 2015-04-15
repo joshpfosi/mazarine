@@ -2,12 +2,9 @@
  * This file exposes the motor control interface to implement motion control
  */
 
-#define IN1 24
-#define IN2 25
-#define IN3 30
-#define IN4 31
-#define E1  2
-#define E2  3
+#include "pinmap.h"
+
+void setupMotorControl(void);
 
 /* sets/gets angular speed of bot tire */
 void set_speed(int s);

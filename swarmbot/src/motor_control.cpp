@@ -15,6 +15,16 @@
 #define MAX_SPEED 5
 #define MIN_SPEED 1 
 
+void setupMotorControl(void) {
+    pinMode(ML1, OUTPUT);
+    pinMode(ML2, OUTPUT);
+    pinMode(MR1, OUTPUT);
+    pinMode(MR2, OUTPUT);
+
+    pinMode(E1, OUTPUT);
+    pinMode(E2, OUTPUT);
+}
+
 /* initialize to some speed */
 static int speed = 1;
 
@@ -23,7 +33,7 @@ static int speed = 1;
  */
 static int speed_to_pwm(int s) {
     if (s < MIN_SPEED || s > MAX_SPEED) s = 3;
-    return 30 * s; /* minimum is 0, max is 255 */
+    return 200 * s; /* minimum is 0, max is 255 */
 }
 
 static void enable(int forward)  { 
@@ -49,11 +59,11 @@ int  get_speed(void)  { return speed; }
 void forward(void) {
     disable();
 
-    digitalWrite(IN2, LOW);
-    digitalWrite(IN1, HIGH);
+    digitalWrite(ML2, LOW);
+    digitalWrite(ML1, HIGH);
 
-    digitalWrite(IN3, LOW);
-    digitalWrite(IN4, HIGH);
+    digitalWrite(MR1, LOW);
+    digitalWrite(MR2, HIGH);
 
     enable(true);
 }
@@ -61,11 +71,11 @@ void forward(void) {
 void backward(void) {
     disable();
 
-    digitalWrite(IN2, HIGH);
-    digitalWrite(IN1, LOW);
+    digitalWrite(ML2, HIGH);
+    digitalWrite(ML1, LOW);
 
-    digitalWrite(IN3, HIGH);
-    digitalWrite(IN4, LOW);
+    digitalWrite(MR1, HIGH);
+    digitalWrite(MR2, LOW);
 
     enable(false);
 }
@@ -79,20 +89,20 @@ void turn(int angle) {
 
     if (angle > 0) { // turn left
         // turn right motor forward
-        digitalWrite(IN1, LOW);
-        digitalWrite(IN2, HIGH);
+        digitalWrite(ML1, LOW);
+        digitalWrite(ML2, HIGH);
 
         // turn left motor backward
-        digitalWrite(IN3, LOW);
-        digitalWrite(IN4, HIGH);
+        digitalWrite(MR1, LOW);
+        digitalWrite(MR2, HIGH);
     } else { // turn right
         // turn right motor backward
-        digitalWrite(IN1, HIGH);
-        digitalWrite(IN2, LOW);
+        digitalWrite(ML1, HIGH);
+        digitalWrite(ML2, LOW);
 
         // turn left motor forward
-        digitalWrite(IN3, HIGH);
-        digitalWrite(IN4, LOW);
+        digitalWrite(MR1, HIGH);
+        digitalWrite(MR2, LOW);
     }
 
     analogWrite(E1, s);
@@ -110,12 +120,12 @@ void turnLeft(void) {
     int s = 40;
 
     // turn right motor forward
-    digitalWrite(IN1, LOW);
-    digitalWrite(IN2, HIGH);
+    digitalWrite(ML1, LOW);
+    digitalWrite(ML2, HIGH);
 
     // turn left motor backward
-    digitalWrite(IN3, LOW);
-    digitalWrite(IN4, HIGH);
+    digitalWrite(MR1, LOW);
+    digitalWrite(MR2, HIGH);
 
     analogWrite(E1, s);
     analogWrite(E2, s);
@@ -127,12 +137,12 @@ void turnRight(void) {
     int s = 40;
 
     // turn right motor backward
-    digitalWrite(IN1, HIGH);
-    digitalWrite(IN2, LOW);
+    digitalWrite(ML1, HIGH);
+    digitalWrite(ML2, LOW);
 
     // turn left motor forward
-    digitalWrite(IN3, HIGH);
-    digitalWrite(IN4, LOW);
+    digitalWrite(MR1, HIGH);
+    digitalWrite(MR2, LOW);
 
     analogWrite(E1, s);
     analogWrite(E2, s);

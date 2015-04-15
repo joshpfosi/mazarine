@@ -6,8 +6,8 @@
 #define IN2 25
 #define IN3 30
 #define IN4 31
-#define E1  0
-#define E2  1
+#define E1  2
+#define E2  3
 
 /* sets/gets angular speed of bot tire */
 void set_speed(int s);

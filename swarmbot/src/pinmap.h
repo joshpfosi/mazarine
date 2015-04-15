@@ -32,13 +32,13 @@
 
 // Motor Control pins
 
-#define ML1              30
-#define ML2              31
-#define MR1              32
-#define MR2              33
+#define ML1              24
+#define ML2              25
+#define MR1              30
+#define MR2              31
 
-#define E1               A2
-#define E2               A3
+#define E1               4
+#define E2               5
 
 // Collision Detection pins
 

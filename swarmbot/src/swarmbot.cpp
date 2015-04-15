@@ -1,6 +1,5 @@
 #include "pinmap.h"
 #include "photo_sensor.h"
-#include "collision.h"
 #include "motor_control.h"
 
 // ----------------------------------------------------------------------------
@@ -9,101 +8,115 @@ static bool isBot1  = true;
 static bool hitWall = false;
 // ----------------------------------------------------------------------------
 
+void bot1(void);
+void bot2(void);
 
-//#define NUM_BUMPERS 5
-//#define DEBOUNCE_TIME 10000 // ms
-//
-//// indices into boolean array for each bumper
-/// and bumper array for each pin
-//#define FRONT_LEFT  0
-//#define FRONT_RIGHT 1
-//#define LEFT        2
-//#define RIGHT       3
-//#define BACK        4
-//
-//// input pins for reading if a bumper is pressed
-//
-//bool bumperHit[NUM_BUMPERS];
-//volatile bool collisionHappened = false;
-//const int bumpers[] = { FL, FR, L, R, B };
-//
-//void setupCollision(void) {
-//    for (int i = 0; i < NUM_BUMPERS; ++i) pinMode(bumpers[i], INPUT);
-//}
-//
+// ----------------------------------------------------------------------------
+// collision.h
+#define NUM_BUMPERS 5
+#define DEBOUNCE_TIME 10000 // ms
+
+// indices into boolean array for each bumper
+// and bumper array for each pin
+#define FRONT_LEFT  0
+#define FRONT_RIGHT 1
+#define LEFT        2
+#define RIGHT       3
+#define BACK        4
+
+// input pins for reading if a bumper is pressed
+
+bool bumperHit[NUM_BUMPERS];
+volatile bool collisionHappened = false;
+const int bumpers[] = { FL, FR, L, R, B };
+// ----------------------------------------------------------------------------
+
+// ----------------------------------------------------------------------------
+// collision.cpp
+void detectCollision(void) {
+    static unsigned long lastInterruptTime;
+    unsigned long currTime = micros();
+
+    if (currTime - lastInterruptTime > DEBOUNCE_TIME) {
+        collisionHappened = true;
+        lastInterruptTime = currTime;
+    }
+}
+// ----------------------------------------------------------------------------
+
 void setup() {
     // ------------------------------------------------------------------------
     // Set up general Bot pins
-    pinMode( GO_SWITCH,  INPUT);
-    pinMode( BOT_SWITCH, INPUT);
+    //pinMode( GO_SWITCH,  INPUT);
+    //pinMode( BOT_SWITCH, INPUT);
     // ------------------------------------------------------------------------
 
     Serial.begin(9600);
 
-    //setupPhotosensor();
-    pinMode(PHOTO_RED_LEFT,   OUTPUT);
-    pinMode(PHOTO_RED_RIGHT,  OUTPUT);
-    pinMode(PHOTO_BLUE_LEFT,  OUTPUT);
-    pinMode(PHOTO_BLUE_RIGHT, OUTPUT);
-    pinMode(PHOTOLEFT,        INPUT);
-    pinMode(PHOTORIGHT,       INPUT);
-    //setupCollision();
-    //
-    attachInterrupt(0, detectCollision, CHANGE);
+    setupPhotosensor();
+    setupMotorControl();
+
+    attachInterrupt(COLLISION_INT, detectCollision, CHANGE);
+    for (int i = 0; i < NUM_BUMPERS; ++i) pinMode(bumpers[i], INPUT);
 }
-//
-//void detectCollision(void) {
-//    Serial.println("in loop");
-//    static unsigned long lastInterruptTime;
-//    unsigned long currTime = micros();
-//
-//    if (currTime - lastInterruptTime > DEBOUNCE_TIME) {
-//        collisionHappened = true;
-//        lastInterruptTime = currTime;
-//    }
-//}
 
 void loop() {
-    //test();
-    if (collisionHappened) {
-        Serial.println("collision Happened");
-        for (int i = 0; i < NUM_BUMPERS; ++i) {
-            bumperHit[i] = digitalRead(bumpers[i]);
-    
-            if (bumperHit[i]) {
-                Serial.println(i);
-                bumperHit[i] = false;
-            }
-        }
-    }
+    // TEST COLLISION
+    //if (collisionHappened) {
+    //    for (int i = 0; i < NUM_BUMPERS; ++i) {
+    //        bumperHit[i] = digitalRead(bumpers[i]);
+    //
+    //        if (bumperHit[i]) {
+    //            Serial.println(i);
+    //            bumperHit[i] = false;
+    //        }
+    //    }
+    //}
+
+    // TEST MOTOR CONTROL
+    //forward();
+    //delay(1000);
+    //backward();
+    //delay(2000);
+    //stop();
+    //delay(500);
+
+
+
     //while (!digitalRead(GO_SWITCH)) { delayMicroseconds(1); } // ON
 
-    //isBot1 = digitalRead(BOT_SWITCH);
+    isBot1 = true; //digitalRead(BOT_SWITCH);
 
-    //// GO state
-    //if (isBot1) bot1();
-    //else        bot2();
+    // GO state
+    if (isBot1) bot1();
+    else        bot2();
 }
 
-//void bot1(void) {
-//    // Puts bot in motion (`forward()`)
-//    forward();
-//
-//    // Loops until collision (boolean is set in ISR)
-//    while (!hitWall) {
-//        for (int i = 0; i < NUM_BUMPERS; ++i) hitWall = bumperHit[i];
-//        delayMicroseconds(100); // just so we don't overload the processor
-//                                // could be longer potentially
-//    }
-//
-//    // Assumes it hit the correct wall and turns a predetermined angle to the left
-//
-//    backward(); delay(1); // resolve collision by backing up
-//    turn(-20); // negative to turn left
-//
-//    // Moves forward 
-//    forward();
-//
+void bot1(void) {
+    // Puts bot in motion (`forward()`)
+    forward();
+
+    // Loops until collision (boolean is set in ISR)
+    while (!hitWall) {
+        for (int i = 0; i < NUM_BUMPERS; ++i) {
+            if (digitalRead(bumpers[i])) {
+                hitWall = true;
+            }
+        }
+        delay(1);
+    }
+
+
+    // Assumes it hit the correct wall and turns a predetermined angle to the left
+
+    stop(); delay(1000); // resolve collision by backing up
+    forward();
+    while(1) {}
+    turn(-20); // negative to turn left
+
+    // Moves forward 
+    forward();
+
 //    // Stops on red, flashing a red LED
 //    // Turns a predetermined angle to the right, and follows red
 //    // Stops on yellow, flashing yellow LED twice
@@ -126,9 +139,9 @@ void loop() {
 //    // Turns off yellow LED
 //    // Waits for `DONE`
 //    // Flashes green LED
-//}
-//
-//void bot2(void) {
+}
+
+void bot2(void) {
 //    // Waits for `START`
 //    // Flash green LED
 //    // Puts bot in motion (`forward()`)
@@ -153,4 +166,4 @@ void loop() {
 //    // TBD // we want this to be close to a specific location
 //    // Communicates to Bot 1: `DONE`
 //    // Flashes green LED
-//}
+}
