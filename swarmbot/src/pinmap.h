@@ -22,13 +22,13 @@
 
 // Photosensor pins
 
-#define PHOTO_RED_LEFT   10
-#define PHOTO_RED_RIGHT  11
-#define PHOTO_BLUE_LEFT  12
-#define PHOTO_BLUE_RIGHT 13
-
+#define PHOTO_RED_LEFT   9
+#define PHOTO_RED_RIGHT  10
+#define PHOTO_BLUE_LEFT  11
+#define PHOTO_BLUE_RIGHT 12
+                         
 #define PHOTOLEFT        A0
-#define PHOTORIGHT       A1
+#define PHOTORIGHT       A2 // should be A1 but wire stuck in it
 
 // Motor Control pins
 
