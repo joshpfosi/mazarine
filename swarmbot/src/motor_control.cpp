@@ -33,7 +33,7 @@ static int speed = 1;
  */
 static int speed_to_pwm(int s) {
     if (s < MIN_SPEED || s > MAX_SPEED) s = 3;
-    return 200 * s; /* minimum is 0, max is 255 */
+    return 50 * s; /* minimum is 0, max is 255 */
 }
 
 static void enable(int forward)  { 

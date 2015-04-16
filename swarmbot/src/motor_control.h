@@ -2,6 +2,9 @@
  * This file exposes the motor control interface to implement motion control
  */
 
+#ifndef MOTOR_CONTROL_H
+#define MOTOR_CONTROL_H
+
 #include "pinmap.h"
 
 void setupMotorControl(void);
@@ -27,3 +30,5 @@ void turnRight(void);
 
 /* stops the bot */
 void stop(void);
+
+#endif // MOTOR_CONTROL_H
