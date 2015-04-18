@@ -156,35 +156,91 @@ void bot1(void) {
 
 void flashLED(int ledPin) {
   digitalWrite(ledPin, HIGH);
-  delay(500);
+  delay(100);
   digitalWrite(ledPin, LOW);
-  delay(500);
+  delay(100);
+}
+
+// NEED TO BE MOVED TO PINMAP.H
+int ledState = LOW;
+long previousMillis = 0;
+long interval = 1000;
+
+void flashingLED(int ledPin) {
+  while(1) {
+    static unsigned long currentMillis = millis();
+    if(currentMillis - previousMillis > interval) {
+      previousMillis = currentMillis;   
+      ledState = !ledState;
+      digitalWrite(ledPin, ledState);
+    }
+  }
+}
+
+void stopOn(Colors color) {
+  static int sensorL, sensorR, r, b;
+  do {
+    readRightSensor(r, b);
+    sensorL = getColor(r, b);
+    readLeftSensor(r, b);
+    sensorR = getColor(r, b);
+    forward();
+  } while (sensorL != color || sensorR != color);
+  stop();
 }
 
 void bot2(void) {
 //    // Waits for `START`
+  //static int  msg;
+  //msg = receive();
+  //while(! START) delayMicroseconds(1);
 //    // Flash green LED
+  flashLED(GREEN_LED);
 //    // Puts bot in motion (`forward()`)
 //    // Loops until collision (boolean is set in ISR)
+  while (!hitWall) {
+    forward();
+    for (int i = 0; i < NUM_BUMPERS; ++i) {
+      if (digitalRead(bumpers[i])) hitWall = true;
+    }
+    delayMicroseconds(1);
+  }
 //    // Assumes it hit the correct wall and turns a predetermined angle to the left
+  turn(-160);
 //    // Moves forward 
 //    // Stops on blue, flashing a blue LED
+  stopOn(BLUE);  // JUST REALIZE THAT WE MIGHT NOT NEED THIS IF WE ADD THE !c1 && !c2 forward() CONDITION IN followColorUntilColor
+  flashLED(BLUE_LED);
 //    // Turns a predetermined angle to the right, and follows blue
+  turn(160);
 //    // Stops on yellow, flashing yellow LED twice
+  followColorUntilColor(BLUE, YELLOW);
+  flashLED(YELLOW_LED);
+  flashLED(YELLOW_LED);
 //    // Moves forward
 //    // Follows blue
+  followColorUntilColor(BLUE, YELLOW);
 //    // Stops on yellow, turns on yellow LED, turns 180 degrees
+  turn(180);
 //    // Communicates to Bot 1: `TOXIC`
+  //trasmit(TOXIC);
 //    // Flash yellow continuously
+  flashingLED(YELLOW_LED);
 //    // Moves forward until blue
+  stopOn(BLUE);
 //    // Follows blue
 //    // Stops on yellow
+  followColorUntilColor(BLUE, YELLOW);
 //    // Communicates to Bot 1: `STOP_YELLOW`
+  //transmit(STOP_YELLOW);
 //    // Stop flashing yellow LED
+  digitalWrite(YELLOW_LED, LOW);
 //    // Moves forward until blue
+  stopOn(BLUE);
 //    // Follows blue
 //    // TBD // we want this to be close to a specific location
 //    // Communicates to Bot 1: `DONE`
+  //transmit(DONE);
 //    // Flashes green LED
+  flashLED(GREEN_LED);
 }
-
