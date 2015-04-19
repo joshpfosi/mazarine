@@ -8,20 +8,6 @@ class TodosController < ApplicationController
     @todos = Todo.all
   end
 
-  # GET /todos/1
-  # GET /todos/1.json
-  def show
-  end
-
-  # GET /todos/new
-  def new
-    @todo = Todo.new
-  end
-
-  # GET /todos/1/edit
-  def edit
-  end
-
   # POST /todos
   # POST /todos.json
   def create
