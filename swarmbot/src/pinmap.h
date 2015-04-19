@@ -23,12 +23,12 @@
 // Photosensor pins
 
 #define PHOTO_RED_LEFT   9
-#define PHOTO_RED_RIGHT  10
+#define PHOTO_RED_RIGHT  8
 #define PHOTO_BLUE_LEFT  11
 #define PHOTO_BLUE_RIGHT 12
                          
 #define PHOTOLEFT        A0
-#define PHOTORIGHT       A2 // should be A1 but wire stuck in it
+#define PHOTORIGHT       A1
 
 // Motor Control pins
 
@@ -37,8 +37,8 @@
 #define MR1              30
 #define MR2              31
 
-#define E1               4
-#define E2               5
+#define EL               4
+#define ER               5
 
 // Collision Detection pins
 

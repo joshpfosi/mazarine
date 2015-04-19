@@ -21,8 +21,8 @@ void setupMotorControl(void) {
     pinMode(MR1, OUTPUT);
     pinMode(MR2, OUTPUT);
 
-    pinMode(E1, OUTPUT);
-    pinMode(E2, OUTPUT);
+    pinMode(EL, OUTPUT);
+    pinMode(ER, OUTPUT);
 }
 
 /* initialize to some speed */
@@ -33,21 +33,21 @@ static int speed = 1;
  */
 static int speed_to_pwm(int s) {
     if (s < MIN_SPEED || s > MAX_SPEED) s = 3;
-    return 50 * s; /* minimum is 0, max is 255 */
+    return 120 * s; /* minimum is 0, max is 255 */
 }
 
 static void enable(int forward)  { 
     if (forward) {
-        analogWrite(E1, speed_to_pwm(speed));
-        analogWrite(E2, speed_to_pwm(speed));
+        analogWrite(EL, speed_to_pwm(speed));
+        analogWrite(ER, speed_to_pwm(speed));
     }
     else { /* backward */
-        analogWrite(E1, speed_to_pwm(speed));
-        analogWrite(E2, speed_to_pwm(speed));
+        analogWrite(EL, speed_to_pwm(speed));
+        analogWrite(ER, speed_to_pwm(speed));
     }
 }
 
-static void disable(void) { analogWrite(E1, 0);     analogWrite(E2, 0);     }
+static void disable(void) { analogWrite(EL, 0);     analogWrite(ER, 0);     }
 
 /* -------------------------- INTERFACE -------------------------- */
 
@@ -59,11 +59,11 @@ int  get_speed(void)  { return speed; }
 void forward(void) {
     disable();
 
-    digitalWrite(ML2, LOW);
     digitalWrite(ML1, HIGH);
+    digitalWrite(ML2, LOW);
 
-    digitalWrite(MR1, LOW);
-    digitalWrite(MR2, HIGH);
+    digitalWrite(MR1, HIGH);
+    digitalWrite(MR2, LOW);
 
     enable(true);
 }
@@ -71,11 +71,11 @@ void forward(void) {
 void backward(void) {
     disable();
 
-    digitalWrite(ML2, HIGH);
     digitalWrite(ML1, LOW);
+    digitalWrite(ML2, HIGH);
 
-    digitalWrite(MR1, HIGH);
-    digitalWrite(MR2, LOW);
+    digitalWrite(MR1, LOW);
+    digitalWrite(MR2, HIGH);
 
     enable(false);
 }
@@ -85,28 +85,28 @@ void turn(int angle) {
     disable();
     
     /* these constants were found experimentally */
-    int s = 35, turn_constant = 18;
+    int s = 75, turn_constant = 8;
 
     if (angle > 0) { // turn left
-        // turn right motor forward
-        digitalWrite(ML1, LOW);
-        digitalWrite(ML2, HIGH);
-
-        // turn left motor backward
-        digitalWrite(MR1, LOW);
-        digitalWrite(MR2, HIGH);
-    } else { // turn right
-        // turn right motor backward
+        // turn left motor forward
         digitalWrite(ML1, HIGH);
         digitalWrite(ML2, LOW);
 
-        // turn left motor forward
+        // turn right motor backward
+        digitalWrite(MR1, LOW);
+        digitalWrite(MR2, HIGH);
+    } else { // turn right
+        // turn left motor backward
+        digitalWrite(ML1, LOW);
+        digitalWrite(ML2, HIGH);
+
+        // turn right motor forward
         digitalWrite(MR1, HIGH);
         digitalWrite(MR2, LOW);
     }
 
-    analogWrite(E1, s);
-    analogWrite(E2, s);
+    analogWrite(EL, s);
+    analogWrite(ER, s);
 
     angle = (angle > 0) ? angle : 0 - angle; // abs(angle)
     delay(angle * turn_constant);            // measured constant
@@ -114,38 +114,38 @@ void turn(int angle) {
     disable();
 }
 
-void turnLeft(void) {
-    disable();
-    
-    int s = 40;
-
-    // turn right motor forward
-    digitalWrite(ML1, LOW);
-    digitalWrite(ML2, HIGH);
-
-    // turn left motor backward
-    digitalWrite(MR1, LOW);
-    digitalWrite(MR2, HIGH);
-
-    analogWrite(E1, s);
-    analogWrite(E2, s);
-}
-
 void turnRight(void) {
     disable();
     
-    int s = 40;
+    int s = 80;
 
-    // turn right motor backward
+    // turn leftj motor forward
     digitalWrite(ML1, HIGH);
     digitalWrite(ML2, LOW);
+
+    // turn right motor backward
+    //digitalWrite(MR1, HIGH);
+    //digitalWrite(MR2, LOW);
+
+    analogWrite(EL, s);
+    //analogWrite(ER, s);
+}
+
+void turnLeft(void) {
+    disable();
+    
+    int s = 80;
+
+    // turn right motor backward
+    //digitalWrite(ML1, HIGH);
+    //digitalWrite(ML2, LOW);
 
     // turn left motor forward
     digitalWrite(MR1, HIGH);
     digitalWrite(MR2, LOW);
 
-    analogWrite(E1, s);
-    analogWrite(E2, s);
+    //analogWrite(EL, s);
+    analogWrite(ER, s);
 }
 
 void stop(void) { disable(); }

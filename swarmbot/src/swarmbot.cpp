@@ -44,8 +44,6 @@ inline bool isBlue  (int red, int blue);
 inline bool isRed   (int red, int blue);
 inline bool isYellow(int red, int blue);
 
-inline Colors getColor(int red, int blue, bool left);
-
 inline bool followColorUntilColor(Colors c1, Colors c2);
 
 void setupPhotosensor(void);
@@ -65,7 +63,7 @@ void detectCollision(void) {
 }
 
 void setupCollision(void) {
-    attachInterrupt(COLLISION_INT, detectCollision, CHANGE);
+    attachInterrupt(COLLISION_INT, detectCollision, RISING);
     for (int i = 0; i < NUM_BUMPERS; ++i) pinMode(bumpers[i], INPUT);
 }
 // ----------------------------------------------------------------------------
@@ -82,71 +80,97 @@ void setupPhotosensor(void) {
 }
 
 inline bool isBlue(int red, int blue, bool left) { 
-    if (left) return (930 < red && red < 1024) && (400 < blue && blue < 500);
-    else      return (950 < red && red < 1024) && (150 < blue && blue < 250);
+    if (left) return (900 < red && red < 1024) && (500 < blue && blue < 650);
+    else      return (900 < red && red < 1024) && (150 < blue && blue < 250);
 }
 
 inline bool isRed(int red, int blue, bool left) { 
-    if (left) return (600 < red && red < 700) && (850 < blue && blue < 950);
-    else      return (840 < red && red < 940) && (400 < blue && blue < 500);
+    if (left) return (700 < red && red < 800) && (900 < blue && blue < 1024);
+    else      return (800 < red && red < 900) && (650 < blue && blue < 750);
 }
 
 inline bool isYellow(int red, int blue, bool left) { 
-    if (left) return (400 < red && red < 550) && (600 < blue && blue < 700);
+    if (left) return (600 < red && red < 700) && (750 < blue && blue < 850);
     else      return (700 < red && red < 800) && (150 < blue && blue < 250);
-}
-
-inline Colors getColor(int red, int blue, bool left) {
-    char buf[100]; sprintf(buf, "red=%d, blue=%d", red,blue);
-    Serial.println(buf);
-    if (isBlue(red,   blue, left)) return BLUE;
-    if (isRed(red,    blue, left)) return RED;
-    if (isYellow(red, blue, left)) return YELLOW;
-    else                           return BLACK;
 }
 
 //
 // Read sensor value for red, blue and both
 //
-inline void readLeftSensor(int *r, int *b) {
+inline Colors readLeftSensor(void) {
+    int r, b;
+
     digitalWrite(PHOTO_BLUE_LEFT, LOW);
     digitalWrite(PHOTO_RED_LEFT,  HIGH);
     delay(30);
-    *r = analogRead(PHOTOLEFT);
+    r = analogRead(PHOTOLEFT);
     
     digitalWrite(PHOTO_RED_LEFT,  LOW);
     digitalWrite(PHOTO_BLUE_LEFT, HIGH);
     delay(30);
-    *b = analogRead(PHOTOLEFT);
+    b = analogRead(PHOTOLEFT);
 
     digitalWrite(PHOTO_BLUE_LEFT, LOW);
+
+    //char buf[100]; sprintf(buf, "red=%d, blue=%d", r,b);
+    //Serial.println(buf);
+    Colors color;
+    if (isBlue(r,        b, true)) color = BLUE;
+    else if (isRed(r,    b, true)) color = RED;
+    else if (isYellow(r, b, true)) color = YELLOW;
+    else                       color = BLACK;
+
+    //switch (color) {
+    //    case RED:    Serial.println("Left is red");    break;
+    //    case BLUE:   Serial.println("Left is blue");   break;
+    //    case YELLOW: Serial.println("Left is yellow"); break;
+    //    case BLACK:  Serial.println("Left is black");  break;
+    //    default:     Serial.println("We're fucked if we're reading this!");
+    //}
+    
+    return color;
 }
 
-inline void readRightSensor(int *r, int *b) {
+inline Colors readRightSensor(void) {
+    int r, b;
+    
     digitalWrite(PHOTO_BLUE_RIGHT, LOW);
     digitalWrite(PHOTO_RED_RIGHT,  HIGH);
     delay(30);
-    *r = analogRead(PHOTORIGHT);
+    r = analogRead(PHOTORIGHT);
     
     digitalWrite(PHOTO_RED_RIGHT,  LOW);
     digitalWrite(PHOTO_BLUE_RIGHT, HIGH);
     delay(30);
-    *b = analogRead(PHOTORIGHT);
+    b = analogRead(PHOTORIGHT);
 
     digitalWrite(PHOTO_BLUE_RIGHT, LOW);
+
+    Colors color;
+    //char buf[100]; sprintf(buf, "red=%d, blue=%d", r,b);
+    //Serial.println(buf);
+    if (isBlue(r,   b, false)) color = BLUE;
+    else if (isRed(r,    b, false)) color = RED;
+    else if (isYellow(r, b, false)) color = YELLOW;
+    else                       color = BLACK;
+
+    //switch (color) {
+    //    case RED:    Serial.println("Right is red");    break;
+    //    case BLUE:   Serial.println("Right is blue");   break;
+    //    case YELLOW: Serial.println("Right is yellow"); break;
+    //    case BLACK:  Serial.println("Right is black");  break;
+    //    default:     Serial.println("We're fucked if we're reading this!");
+    //}
+    
+    return color;
 }
 
 //
 // Test calibration by serial printing colors
 //
 void testPhotosensor(void) {
-    int red, blue;
-
-    readLeftSensor(&red, &blue);
-    Colors colorLeft = getColor(red, blue, true);
-
-    readRightSensor(&red, &blue);
-    Colors colorRight = getColor(red, blue, false);
+    Colors colorLeft = readLeftSensor();
+    Colors colorRight = readRightSensor();
 
     delay(100);
     // NOTE assumes Serial is setup via Serial.begin(9600)
@@ -168,27 +192,34 @@ void testPhotosensor(void) {
 }
 
 inline bool followColorUntilColor(Colors c1, Colors c2) {
-    int redLeft, blueLeft, redRight, blueRight;
+    Colors colorLeft  = readLeftSensor();
+    Colors colorRight = readRightSensor();
 
-    readLeftSensor(&redLeft, &blueLeft);
-    readRightSensor(&redRight, &blueRight);
-
-    Colors colorLeft = getColor(redLeft, blueLeft, true);
-    Colors colorRight = getColor(redRight, blueRight, false);
-
-    if (colorLeft == c2 && colorRight == c2)        {
+    if (colorLeft == c2 || colorRight == c2)        {
         stop(); 
         return true;
     }
-    else if (colorLeft == c1 && colorRight == c1)   {
-        forward();
-        return false;
-    }
     else if (colorLeft == c1 && colorRight != c1) {
-        do { turnLeft();  } while (colorLeft != c1 || colorRight != c1); 
+        //Serial.println("Right is off");
+        turnLeft();
+        do {
+            colorRight = readRightSensor();
+        } while (colorRight != c1 && colorRight != c2);
+        stop();
+          
     }
     else if (colorLeft != c1 && colorRight == c1) {
-        do { turnRight(); } while (colorLeft != c1 || colorRight != c1); 
+        //Serial.println("Left is off");
+        turnRight();
+        do {
+            colorLeft  = readLeftSensor();
+        } while (colorLeft != c1 && colorLeft != c2);
+        stop();
+    }
+    else if ((colorLeft == c1 && colorRight == c1)) {
+        //Serial.println("Both on color ");
+        forward();
+        return false;
     }
 
     return false;
@@ -232,7 +263,7 @@ void loop() {
     //delay(500);
 
     // TEST PHOTOSENSOR
-    //testPhotosensor();
+    //while (1) testPhotosensor();
 
     //while (!digitalRead(GO_SWITCH)) { delayMicroseconds(1); } // ON
 
@@ -256,29 +287,25 @@ void bot1(void) {
         }
         delay(1);
     }
+    Serial.println("Hit wall");
 
 
     // Assumes it hit the correct wall and turns a predetermined angle to the left
 
-    stop(); delay(1000); // resolve collision by backing up
-    forward();
-    turn(-20); // negative to turn left
+    stop(); delay(200); // resolve collision by backing up
+    backward();
+    delay(100);
+    turn(-180); // negative to turn right
 
     // Moves forward until red
     forward();
 
     bool onRed = false;
     do {
-        int rL, bL, rR, bR;
-        Colors left, right;
+        Colors left  = readLeftSensor(),
+               right = readRightSensor();
 
-        readLeftSensor(&rL, &bL);
-        readRightSensor(&rR, &bR);
-
-        left  = getColor(rL, bL, true);  
-        right = getColor(rR, bR, false);
-
-        onRed = (left == RED && right == RED);
+        onRed = (left == RED || right == RED);
     } while (!onRed);
 
     // Stops on red, flashing a red LED
@@ -287,8 +314,9 @@ void bot1(void) {
 
     // Turns a predetermined angle to the right, and follows red
 
-    turn(30); // positive to turn right
-    followColorUntilColor(RED, YELLOW);
+    while (!followColorUntilColor(RED, YELLOW)) { delayMicroseconds(1); }
+    Serial.println("Found yellow");
+    delay(10000);
     // Stops on yellow, flashing yellow LED twice
 //    // Moves forward
 //    // Follows red
