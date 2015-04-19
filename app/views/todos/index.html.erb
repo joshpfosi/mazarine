@@ -1,12 +1,13 @@
-<p id="notice"><%= notice %></p>
+<div class="container">
+<h4 class="center-align">Swarmbot Status</h4>
 
-<h1>Todos</h1>
+<p>This page displays real-time data and status updates from the swarmbot as it traverses dangerous terrain. This allows first responders to assess the scene from a distance.
 
-<table>
+<table class="hoverable">
   <thead>
     <tr>
-      <th>Content</th>
-      <th colspan="3"></th>
+      <th>Status</th>
+      <th></th>
     </tr>
   </thead>
 
@@ -14,8 +15,9 @@
     <% @todos.each do |todo| %>
       <tr>
         <td><%= todo.content %></td>
-        <td><%= link_to 'x', todo, method: :delete, data: { confirm: 'Are you sure?' } %></td>
+        <td class="center-align"><%= link_to '', todo, method: :delete, data: { confirm: 'Are you sure?' }, class: "mdi-action-delete"%></td>
       </tr>
     <% end %>
   </tbody>
 </table>
+</div>

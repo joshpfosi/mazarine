@@ -13,3 +13,14 @@
  *= require_tree .
  *= require_self
  */
+
+@import "materialize";
+
+a:visited {
+  color: #039be5;
+}
+
+a:hover {
+  color: #0077B2;
+  background-color: transparent;
+}
