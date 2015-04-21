@@ -149,9 +149,18 @@ void bot1(void) {
 
     // Stops on yellow, turns on yellow LED, turns 180 degrees
     stop();
-//    // Moves forward until red
-//    // Follows red
-//    // Stops on yellow
+    digitalWrite(YELLOW_LED, HIGH);
+    turn(180);
+
+    // Moves forward until red
+    forwardUntilColor(RED);
+
+    // Follows red
+    while (!followColorUntilColor(RED, YELLOW)) { delayMicroseconds(1); }
+
+    // Stops on yellow
+    stop();
+
 //    // Communicates to Bot 2: `START`
 //    // Waits for `ACK_START`
 //    // Flashes green LED
