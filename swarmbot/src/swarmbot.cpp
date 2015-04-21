@@ -191,6 +191,11 @@ void testPhotosensor(void) {
     }
 }
 
+inline void forwardUntilColor(Colors c) {
+    while (readLeftSensor() != c && readRightSensor() != c) forward();
+    stop();
+}
+
 inline bool followColorUntilColor(Colors c1, Colors c2) {
     Colors colorLeft  = readLeftSensor();
     Colors colorRight = readRightSensor();
@@ -232,6 +237,8 @@ void setup() {
     // Set up general Bot pins
     //pinMode( GO_SWITCH,  INPUT);
     //pinMode( BOT_SWITCH, INPUT);
+    pinMode( RED_LED,    OUTPUT);
+    pinMode( YELLOW_LED, OUTPUT);
     // ------------------------------------------------------------------------
 
     Serial.begin(9600);
@@ -272,6 +279,8 @@ void loop() {
     // GO state
     if (isBot1) bot1();
     else        bot2();
+
+    while (1) {};
 }
 
 void bot1(void) {
@@ -297,30 +306,29 @@ void bot1(void) {
     delay(100);
     turn(-180); // negative to turn right
 
-    // Moves forward until red
-    forward();
+    // Moves forward until red and stops
+    forwardUntilColor(RED);
 
-    bool onRed = false;
-    do {
-        Colors left  = readLeftSensor(),
-               right = readRightSensor();
-
-        onRed = (left == RED || right == RED);
-    } while (!onRed);
-
-    // Stops on red, flashing a red LED
-    stop();
+    // Flash a red LED
     flashLed(RED_LED); // pauses for 1 second to flash
 
-    // Turns a predetermined angle to the right, and follows red
-
+    // Follows red
     while (!followColorUntilColor(RED, YELLOW)) { delayMicroseconds(1); }
     Serial.println("Found yellow");
-    delay(10000);
+
     // Stops on yellow, flashing yellow LED twice
-//    // Moves forward
-//    // Follows red
-//    // Stops on yellow, turns on yellow LED, turns 180 degrees
+    stop();
+    flashLed(YELLOW_LED); // pauses for 1 second to flash
+    flashLed(YELLOW_LED); // pauses for 1 second to flash
+
+    // Moves forward until red
+    forwardUntilColor(RED);
+
+    // Follows red
+    while (!followColorUntilColor(RED, YELLOW)) { delayMicroseconds(1); }
+
+    // Stops on yellow, turns on yellow LED, turns 180 degrees
+    stop();
 //    // Moves forward until red
 //    // Follows red
 //    // Stops on yellow
