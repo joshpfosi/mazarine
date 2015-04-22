@@ -33,7 +33,7 @@ static int speed = 1;
  */
 static int speed_to_pwm(int s) {
     if (s < MIN_SPEED || s > MAX_SPEED) s = 3;
-    return 120 * s; /* minimum is 0, max is 255 */
+    return 70 * s; /* minimum is 0, max is 255 */
 }
 
 static void enable(int forward)  { 
@@ -85,7 +85,7 @@ void turn(int angle) {
     disable();
     
     /* these constants were found experimentally */
-    int s = 75, turn_constant = 8;
+    int s = 70, turn_constant = 4;
 
     if (angle > 0) { // turn left
         // turn left motor forward
@@ -117,35 +117,33 @@ void turn(int angle) {
 void turnRight(void) {
     disable();
     
-    int s = 80;
+    int s = 40;
 
-    // turn leftj motor forward
-    digitalWrite(ML1, HIGH);
-    digitalWrite(ML2, LOW);
+    // turn left motor forward
+    digitalWrite(ML1, LOW);
+    digitalWrite(ML2, HIGH);
 
     // turn right motor backward
-    //digitalWrite(MR1, HIGH);
-    //digitalWrite(MR2, LOW);
+    digitalWrite(MR1, HIGH);
+    digitalWrite(MR2, LOW);
 
-    analogWrite(EL, s);
-    //analogWrite(ER, s);
+    enable(true);
 }
 
 void turnLeft(void) {
     disable();
     
-    int s = 80;
+    int s = 40;
 
-    // turn right motor backward
-    //digitalWrite(ML1, HIGH);
-    //digitalWrite(ML2, LOW);
+    // turn left motor backward
+    digitalWrite(ML1, HIGH);
+    digitalWrite(ML2, LOW);
 
-    // turn left motor forward
-    digitalWrite(MR1, HIGH);
-    digitalWrite(MR2, LOW);
+    // turn right motor forward
+    digitalWrite(MR1, LOW);
+    digitalWrite(MR2, HIGH);
 
-    //analogWrite(EL, s);
-    analogWrite(ER, s);
+    enable(true);
 }
 
 void stop(void) { disable(); }

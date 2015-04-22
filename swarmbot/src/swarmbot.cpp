@@ -124,10 +124,10 @@ void bot1(void) {
     stop(); delay(200); // resolve collision by backing up
     backward();
     delay(100);
-    turn(-180); // negative to turn right
+    turn(-210); // negative to turn right
 
     // Moves forward until red and stops
-    forwardUntilColor(RED);
+    actionUntilColor(RED, forward);
 
     // Flash a red LED
     flashLed(RED_LED); // pauses for 1 second to flash
@@ -136,13 +136,14 @@ void bot1(void) {
     while (!followColorUntilColor(RED, YELLOW)) { delayMicroseconds(1); }
     Serial.println("Found yellow");
 
+    actionUntilColor(YELLOW, turnLeft);
     // Stops on yellow, flashing yellow LED twice
     stop();
     flashLed(YELLOW_LED); // pauses for 1 second to flash
     flashLed(YELLOW_LED); // pauses for 1 second to flash
 
     // Moves forward until red
-    forwardUntilColor(RED);
+    actionUntilColor(RED, forward);
 
     // Follows red
     while (!followColorUntilColor(RED, YELLOW)) { delayMicroseconds(1); }
@@ -151,9 +152,10 @@ void bot1(void) {
     stop();
     digitalWrite(YELLOW_LED, HIGH);
     turn(180);
+    actionUntilColor(RED, turnLeft);
 
     // Moves forward until red
-    forwardUntilColor(RED);
+    actionUntilColor(RED, forward);
 
     // Follows red
     while (!followColorUntilColor(RED, YELLOW)) { delayMicroseconds(1); }
@@ -161,19 +163,44 @@ void bot1(void) {
     // Stops on yellow
     stop();
 
-//    // Communicates to Bot 2: `START`
-//    // Waits for `ACK_START`
-//    // Flashes green LED
-//    // Moves forward until red
-//    // Follows red
-//    // TBD // we want this to be close to a specific location
-//    // Turns on green LED
-//    // Waits for `TOXIC`
-//    // Flash yellow LED continuously
-//    // Waits for `STOP_YELLOW`
-//    // Turns off yellow LED
-//    // Waits for `DONE`
-//    // Flashes green LED
+    // Communicates to Bot 2: `START`
+    delay(500);
+
+    // Waits for `ACK_START`
+    delay(500);
+
+    // Flashes green LED
+    flashLed(GREEN_LED);
+
+    // Moves forward until red
+    actionUntilColor(RED, forward);
+    turn(50);
+
+    forward();
+
+    // Loops until collision (boolean is set in ISR)
+    hitWall = false;
+    while (!hitWall) {
+        for (int i = 0; i < NUM_BUMPERS; ++i) {
+            if (digitalRead(bumpers[i])) {
+                hitWall = true;
+            }
+        }
+        delay(1);
+    }
+
+    backward();
+    delay(250);
+    stop();
+
+    // TBD // we want this to be close to a specific location
+    // Turns on green LED
+    // Waits for `TOXIC`
+    // Flash yellow LED continuously
+    // Waits for `STOP_YELLOW`
+    // Turns off yellow LED
+    // Waits for `DONE`
+    // Flashes green LED
 }
 
 void bot2(void) {
@@ -209,7 +236,7 @@ void bot2(void) {
 
 static inline void flashLed(int ledPin) {
     digitalWrite(ledPin, HIGH);
-    delay(500);
+    delay(200);
     digitalWrite(ledPin, LOW);
-    delay(500);
+    delay(200);
 }

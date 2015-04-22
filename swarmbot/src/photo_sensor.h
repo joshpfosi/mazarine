@@ -3,8 +3,8 @@
 
 enum Colors { RED, BLUE, YELLOW, BLACK };
 
-void readRightSensor (int *r, int *b);
-void readLeftSensor  (int  *r, int *b);
+Colors readRightSensor (void);
+Colors readLeftSensor  (void);
 
 bool isBlue  (int red, int blue);
 bool isRed   (int red, int blue);
@@ -12,7 +12,7 @@ bool isYellow(int red, int blue);
 
 Colors getColor(int red, int blue);
 
-void forwardUntilColor(Colors c);
+void actionUntilColor(Colors c, void (*action)(void));
 bool followColorUntilColor(Colors c1, Colors c2);
 
 void setupPhotosensor(void);

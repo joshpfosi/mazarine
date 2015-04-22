@@ -127,8 +127,8 @@ void testPhotosensor(void) {
     }
 }
 
-void forwardUntilColor(Colors c) {
-    while (readLeftSensor() != c && readRightSensor() != c) forward();
+void actionUntilColor(Colors c, void(*action)(void)) {
+    while (readLeftSensor() != c && readRightSensor() != c) action();
     stop();
 }
 
@@ -136,9 +136,51 @@ bool followColorUntilColor(Colors c1, Colors c2) {
     Colors colorLeft  = readLeftSensor();
     Colors colorRight = readRightSensor();
 
-    if (colorLeft == c2 || colorRight == c2)        {
+    if (colorLeft == c2 && colorRight == c2)        {
         stop(); 
         return true;
+    }
+    else if (colorLeft != c2 && colorRight == c2) {
+        turnRight();
+        do {
+            colorLeft = readLeftSensor();
+        } while (colorLeft != c2);
+
+        stop();
+    }
+    else if (colorLeft == c2 && colorRight != c2) {
+        turnLeft();
+        do {
+            colorRight = readRightSensor();
+        } while (colorRight != c2);
+
+        stop();
+    }
+    else if ((colorLeft == c1 && colorRight == c1)) {
+        //Serial.println("Both on color ");
+        forward();
+        return false;
+    }
+    else if (colorLeft != c1 && colorRight != c1) {
+        bool turning = false, left = true;
+        int i = 0, prevMillis;
+
+        do {
+            if (!turning) { 
+                prevMillis = millis();
+                (left) ? turnLeft() : turnRight();
+                turning = true; left = !left;
+            }
+
+            // turn other way after 100*i milliseconds
+            if (millis() > (200 * i) + prevMillis) {
+                turning = false; ++i;
+            }
+
+            colorLeft  = readLeftSensor();
+            colorRight = readRightSensor();
+            if (colorLeft == c2 || colorRight == c2) return true;
+        } while (colorLeft != c1 && colorRight != c1);
     }
     else if (colorLeft == c1 && colorRight != c1) {
         //Serial.println("Right is off");
@@ -147,7 +189,6 @@ bool followColorUntilColor(Colors c1, Colors c2) {
             colorRight = readRightSensor();
         } while (colorRight != c1 && colorRight != c2);
         stop();
-          
     }
     else if (colorLeft != c1 && colorRight == c1) {
         //Serial.println("Left is off");
@@ -156,11 +197,6 @@ bool followColorUntilColor(Colors c1, Colors c2) {
             colorLeft  = readLeftSensor();
         } while (colorLeft != c1 && colorLeft != c2);
         stop();
-    }
-    else if ((colorLeft == c1 && colorRight == c1)) {
-        //Serial.println("Both on color ");
-        forward();
-        return false;
     }
 
     return false;
