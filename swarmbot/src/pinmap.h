@@ -10,6 +10,7 @@
 
 #define COLLISION_INT    0 // pin 2
 #define COMM_INT         1 // pin 3
+#define COMM_INTERR      2 // pin 21
 
 // Overall pins TODO new name
 
@@ -47,5 +48,10 @@
 #define L                45
 #define R                46
 #define B                47
+
+// Communication pins
+
+#define RECEIVE_PIN      4
+#define TRANSMIT_PIN     12
 
 #endif // PINMAP_H

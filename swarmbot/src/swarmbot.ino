@@ -1,6 +1,7 @@
 #include "pinmap.h"
 #include "motor_control.h"
 #include "photo_sensor.h"
+#include "communication.h"
 
 // ----------------------------------------------------------------------------
 // State variables
@@ -8,6 +9,15 @@ static bool isBot1  = true;
 static bool hitWall = false;
 // ----------------------------------------------------------------------------
 
+/* Communication messages */
+static const unsigned transMsg[] = { 1,1,0,0,1,1,1,0 };
+static const unsigned startMsg[] = { 1,0,1,0,1,0,1,0 };
+static const unsigned toxicMsg[] = { 1,1,0,0,1,1,0,0 };
+static const unsigned stopMsg[]  = { 0,0,1,1,0,0,1,1 };
+static const unsigned doneMsg[]  = { 1,1,1,1,1,1,1,1 };
+static unsigned recMsg[]         = { 0,0,0,0,0,0,0,0,
+                                     0,0,0,0,0,0,0,0 };
+                        
 void bot1(void);
 void bot2(void);
 
@@ -63,6 +73,7 @@ void setup() {
 
     Serial.begin(9600);
 
+    setupCommunication();
     setupPhotosensor();
     setupMotorControl();
     setupCollision();
@@ -163,11 +174,14 @@ void bot1(void) {
     stop();
 
     // Communicates to Bot 2: `START`
-    delay(500);
 
-    // Waits for `ACK_START`
-    delay(500);
-
+    // Waits for `ACK_START`  
+    do {
+      transmit(startMsg, MSG_LEN);
+      receive(recMsg, MSG_LEN);
+    }
+    while (!checkMsg(recMsg, startMsg, MSG_LEN));
+        
     // Flashes green LED
     flashLed(GREEN_LED);
 
@@ -198,6 +212,7 @@ void bot1(void) {
     // Flashes green LED
     flashLed(GREEN_LED);
 }
+
 
 void bot2(void) {
     // Waits for `START`
