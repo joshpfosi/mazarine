@@ -173,24 +173,9 @@ void bot1(void) {
 
     // Moves forward until red
     actionUntilColor(RED, forward);
-    turn(50);
 
-    forward();
-
-    // Loops until collision (boolean is set in ISR)
-    hitWall = false;
-    while (!hitWall) {
-        for (int i = 0; i < NUM_BUMPERS; ++i) {
-            if (digitalRead(bumpers[i])) {
-                hitWall = true;
-            }
-        }
-        delay(1);
-    }
-
-    backward();
-    delay(250);
-    stop();
+    // Follows red, stops on yellow
+    while (!followColorUntilColor(RED, YELLOW)) { delayMicroseconds(1); }
 
     // Turns on green LED
     flashLed(GREEN_LED);
@@ -288,24 +273,9 @@ void bot2(void) {
 
     // Moves forward until blue
     actionUntilColor(BLUE, forward);
-    turn(-50);
 
-    forward();
-
-    // Loops until collision (boolean is set in ISR)
-    hitWall = false;
-    while (!hitWall) {
-        for (int i = 0; i < NUM_BUMPERS; ++i) {
-            if (digitalRead(bumpers[i])) {
-                hitWall = true;
-            }
-        }
-        delay(1);
-    }
-
-    backward();
-    delay(250);
-    stop();
+    // Follows blue, stops on yellow
+    while (!followColorUntilColor(BLUE, YELLOW)) { delayMicroseconds(1); }
 
     // Communicates to Bot 1: `DONE`
     delay(100);

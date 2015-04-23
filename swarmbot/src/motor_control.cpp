@@ -14,7 +14,8 @@
 
 #define MAX_SPEED   5
 #define MIN_SPEED   1 
-#define SPEED_CONST 50
+#define SPEED_CONST 70
+#define TURN_CONST  4 // found experimentally
 
 void setupMotorControl(void) {
     pinMode(ML1, OUTPUT);
@@ -86,7 +87,7 @@ void turn(int angle) {
     disable();
     
     /* these constants were found experimentally */
-    int s = SPEED_CONST, turn_constant = 6;
+    int s = SPEED_CONST, turn_constant = TURN_CONST;
 
     if (angle > 0) { // turn left
         // turn left motor forward
