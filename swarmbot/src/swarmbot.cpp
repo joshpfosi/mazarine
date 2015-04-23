@@ -94,7 +94,7 @@ void loop() {
 
     //while (!digitalRead(GO_SWITCH)) { delayMicroseconds(1); } // ON
 
-    isBot1 = true; //digitalRead(BOT_SWITCH);
+    isBot1 = false; //digitalRead(BOT_SWITCH);
 
     // GO state
     if (isBot1) bot1();
@@ -120,7 +120,6 @@ void bot1(void) {
 
 
     // Assumes it hit the correct wall and turns a predetermined angle to the left
-
     stop(); delay(200); // resolve collision by backing up
     backward();
     delay(100);
@@ -193,41 +192,126 @@ void bot1(void) {
     delay(250);
     stop();
 
-    // TBD // we want this to be close to a specific location
     // Turns on green LED
+    flashLed(GREEN_LED);
+
     // Waits for `TOXIC`
+    delay(100);
+
     // Flash yellow LED continuously
+    // TODO flash LED continously
+
     // Waits for `STOP_YELLOW`
+    delay(100);
+
     // Turns off yellow LED
+    digitalWrite(YELLOW_LED, LOW);
+
     // Waits for `DONE`
+    delay(100);
+
     // Flashes green LED
+    flashLed(GREEN_LED);
 }
 
 void bot2(void) {
-//    // Waits for `START`
-//    // Flash green LED
-//    // Puts bot in motion (`forward()`)
-//    // Loops until collision (boolean is set in ISR)
-//    // Assumes it hit the correct wall and turns a predetermined angle to the left
-//    // Moves forward 
-//    // Stops on blue, flashing a blue LED
-//    // Turns a predetermined angle to the right, and follows blue
-//    // Stops on yellow, flashing yellow LED twice
-//    // Moves forward
-//    // Follows blue
-//    // Stops on yellow, turns on yellow LED, turns 180 degrees
-//    // Communicates to Bot 1: `TOXIC`
-//    // Flash yellow continuously
-//    // Moves forward until blue
-//    // Follows blue
-//    // Stops on yellow
-//    // Communicates to Bot 1: `STOP_YELLOW`
-//    // Stop flashing yellow LED
-//    // Moves forward until blue
-//    // Follows blue
-//    // TBD // we want this to be close to a specific location
-//    // Communicates to Bot 1: `DONE`
-//    // Flashes green LED
+    // Waits for `START`
+    delay(500);
+
+    // Flash green LED
+    flashLed(GREEN_LED);
+
+    // Puts bot in motion (`forward()`)
+    forward();
+
+    // Loops until collision (boolean is set in ISR)
+    while (!hitWall) {
+        for (int i = 0; i < NUM_BUMPERS; ++i) {
+            if (digitalRead(bumpers[i])) {
+                hitWall = true;
+            }
+        }
+        delay(1);
+    }
+    Serial.println("Hit wall");
+
+    // Assumes it hit the correct wall and turns a predetermined angle to the left
+    stop(); delay(200); // resolve collision by backing up
+    backward();
+    delay(100);
+    turn(300); // negative to turn left CALIBRATED
+    
+    // Moves forward 
+    actionUntilColor(BLUE, forward);
+
+    // Stops on blue, flashing a blue LED
+    flashLed(BLUE_LED);
+
+    // Turns a predetermined angle to the right, and follows blue
+    while (!followColorUntilColor(BLUE, YELLOW)) { delayMicroseconds(1); }
+    Serial.println("Found yellow");
+
+    // Stops on yellow, flashing yellow LED twice
+    actionUntilColor(YELLOW, turnLeft);
+
+    flashLed(YELLOW_LED);
+    flashLed(YELLOW_LED);
+
+    // Moves forward
+    actionUntilColor(BLUE, forward);
+
+    // Follows blue
+    while (!followColorUntilColor(BLUE, YELLOW)) { delayMicroseconds(1); }
+
+    // Stops on yellow, turns on yellow LED, turns 180 degrees
+    stop();
+    digitalWrite(YELLOW_LED, HIGH);
+    turn(-180);
+    actionUntilColor(BLUE, turnRight);
+
+    // Communicates to Bot 1: `TOXIC`
+    delay(100);
+    // Flash yellow continuously
+    // TODO flash continuously
+
+    // Moves forward until blue
+    actionUntilColor(BLUE, forward);
+
+    // Follows blue, stops on yellow
+    while (!followColorUntilColor(BLUE, YELLOW)) { delayMicroseconds(1); }
+
+    // Communicates to Bot 1: `STOP_YELLOW`
+    delay(100);
+
+    // Stop flashing yellow LED
+    digitalWrite(YELLOW_LED, LOW);
+
+    // Moves forward until blue
+    actionUntilColor(BLUE, forward);
+    turn(-50);
+
+    forward();
+
+    // Loops until collision (boolean is set in ISR)
+    hitWall = false;
+    while (!hitWall) {
+        for (int i = 0; i < NUM_BUMPERS; ++i) {
+            if (digitalRead(bumpers[i])) {
+                hitWall = true;
+            }
+        }
+        delay(1);
+    }
+
+    backward();
+    delay(250);
+    stop();
+
+    // Communicates to Bot 1: `DONE`
+    delay(100);
+
+    // Flashes green LED
+    flashLed(GREEN_LED);
 }
 
 // ----------------------------------------------------------------------------

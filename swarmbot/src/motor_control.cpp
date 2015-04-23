@@ -12,8 +12,9 @@
 
 /* -------------------------- PRIVATE -------------------------- */
 
-#define MAX_SPEED 5
-#define MIN_SPEED 1 
+#define MAX_SPEED   5
+#define MIN_SPEED   1 
+#define SPEED_CONST 50
 
 void setupMotorControl(void) {
     pinMode(ML1, OUTPUT);
@@ -33,7 +34,7 @@ static int speed = 1;
  */
 static int speed_to_pwm(int s) {
     if (s < MIN_SPEED || s > MAX_SPEED) s = 3;
-    return 70 * s; /* minimum is 0, max is 255 */
+    return SPEED_CONST * s; /* minimum is 0, max is 255 */
 }
 
 static void enable(int forward)  { 
@@ -85,7 +86,7 @@ void turn(int angle) {
     disable();
     
     /* these constants were found experimentally */
-    int s = 70, turn_constant = 4;
+    int s = SPEED_CONST, turn_constant = 6;
 
     if (angle > 0) { // turn left
         // turn left motor forward
@@ -117,7 +118,7 @@ void turn(int angle) {
 void turnRight(void) {
     disable();
     
-    int s = 40;
+    int s = SPEED_CONST;
 
     // turn left motor forward
     digitalWrite(ML1, LOW);
@@ -133,7 +134,7 @@ void turnRight(void) {
 void turnLeft(void) {
     disable();
     
-    int s = 40;
+    int s = SPEED_CONST;
 
     // turn left motor backward
     digitalWrite(ML1, HIGH);
