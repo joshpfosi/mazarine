@@ -12,8 +12,6 @@
 
 /* -------------------------- PRIVATE -------------------------- */
 
-#define MAX_SPEED   5
-#define MIN_SPEED   1 
 #define SPEED_CONST 70
 #define TURN_CONST  4 // found experimentally
 
@@ -28,25 +26,11 @@ void setupMotorControl(void) {
 }
 
 /* initialize to some speed */
-static int speed = 1;
+static int speed = SPEED_CONST;
 
-/* converts angular velocity to pwm value via some experimentally 
- * found constant
- */
-static int speed_to_pwm(int s) {
-    if (s < MIN_SPEED || s > MAX_SPEED) s = 3;
-    return SPEED_CONST * s; /* minimum is 0, max is 255 */
-}
-
-static void enable(int forward)  { 
-    if (forward) {
-        analogWrite(EL, speed_to_pwm(speed));
-        analogWrite(ER, speed_to_pwm(speed));
-    }
-    else { /* backward */
-        analogWrite(EL, speed_to_pwm(speed));
-        analogWrite(ER, speed_to_pwm(speed));
-    }
+static void enable()  { 
+    analogWrite(EL, SPEED_CONST);
+    analogWrite(ER, SPEED_CONST);
 }
 
 static void disable(void) { analogWrite(EL, 0);     analogWrite(ER, 0);     }
@@ -67,7 +51,7 @@ void forward(void) {
     digitalWrite(MR1, HIGH);
     digitalWrite(MR2, LOW);
 
-    enable(true);
+    enable();
 }
 
 void backward(void) {
@@ -79,7 +63,7 @@ void backward(void) {
     digitalWrite(MR1, LOW);
     digitalWrite(MR2, HIGH);
 
-    enable(false);
+    enable();
 }
 
 // turn both motors in opposite directions to pivot
@@ -87,7 +71,7 @@ void turn(int angle) {
     disable();
     
     /* these constants were found experimentally */
-    int s = SPEED_CONST, turn_constant = TURN_CONST;
+    int turn_constant = TURN_CONST;
 
     if (angle > 0) { // turn left
         // turn left motor forward
@@ -107,8 +91,7 @@ void turn(int angle) {
         digitalWrite(MR2, LOW);
     }
 
-    analogWrite(EL, s);
-    analogWrite(ER, s);
+    enable();
 
     angle = (angle > 0) ? angle : 0 - angle; // abs(angle)
     delay(angle * turn_constant);            // measured constant
@@ -118,8 +101,6 @@ void turn(int angle) {
 
 void turnRight(void) {
     disable();
-    
-    int s = SPEED_CONST;
 
     // turn left motor forward
     digitalWrite(ML1, LOW);
@@ -129,13 +110,11 @@ void turnRight(void) {
     digitalWrite(MR1, HIGH);
     digitalWrite(MR2, LOW);
 
-    enable(true);
+    enable();
 }
 
 void turnLeft(void) {
     disable();
-    
-    int s = SPEED_CONST;
 
     // turn left motor backward
     digitalWrite(ML1, HIGH);
@@ -145,7 +124,7 @@ void turnLeft(void) {
     digitalWrite(MR1, LOW);
     digitalWrite(MR2, HIGH);
 
-    enable(true);
+    enable();
 }
 
 void stop(void) { disable(); }

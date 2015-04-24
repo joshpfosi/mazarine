@@ -33,84 +33,59 @@ bool isYellow(int red, int blue, bool left) {
 //
 // Read sensor value for red, blue and both
 //
-Colors readLeftSensor(void) {
-    int r, b;
+void readSensors(Colors &left, Colors &right) {
+    int rL, bL, rR, bR;
 
-    digitalWrite(PHOTO_BLUE_LEFT, LOW);
+    // illuminate RED and read 
     digitalWrite(PHOTO_RED_LEFT,  HIGH);
+    digitalWrite(PHOTO_RED_RIGHT, HIGH);
+
     delay(30);
-    r = analogRead(PHOTOLEFT);
-    
+    rL = analogRead(PHOTOLEFT);
+    rR = analogRead(PHOTORIGHT);
+
+    // turn red off
     digitalWrite(PHOTO_RED_LEFT,  LOW);
-    digitalWrite(PHOTO_BLUE_LEFT, HIGH);
-    delay(30);
-    b = analogRead(PHOTOLEFT);
-
-    digitalWrite(PHOTO_BLUE_LEFT, LOW);
-
-    //char buf[100]; sprintf(buf, "red=%d, blue=%d", r,b);
-    //Serial.println(buf);
-    Colors color;
-    if (isBlue(r,        b, true)) color = BLUE;
-    else if (isRed(r,    b, true)) color = RED;
-    else if (isYellow(r, b, true)) color = YELLOW;
-    else                       color = BLACK;
-
-    //switch (color) {
-    //    case RED:    Serial.println("Left is red");    break;
-    //    case BLUE:   Serial.println("Left is blue");   break;
-    //    case YELLOW: Serial.println("Left is yellow"); break;
-    //    case BLACK:  Serial.println("Left is black");  break;
-    //    default:     Serial.println("We're fucked if we're reading this!");
-    //}
+    digitalWrite(PHOTO_RED_RIGHT, LOW);
     
-    return color;
-}
-
-Colors readRightSensor(void) {
-    int r, b;
-    
-    digitalWrite(PHOTO_BLUE_RIGHT, LOW);
-    digitalWrite(PHOTO_RED_RIGHT,  HIGH);
-    delay(30);
-    r = analogRead(PHOTORIGHT);
-    
-    digitalWrite(PHOTO_RED_RIGHT,  LOW);
+    // illuminate BLUE and read
+    digitalWrite(PHOTO_BLUE_LEFT,  HIGH);
     digitalWrite(PHOTO_BLUE_RIGHT, HIGH);
-    delay(30);
-    b = analogRead(PHOTORIGHT);
 
+    delay(30);
+    bL = analogRead(PHOTOLEFT);
+    bR = analogRead(PHOTORIGHT);
+
+    digitalWrite(PHOTO_BLUE_LEFT,  LOW);
     digitalWrite(PHOTO_BLUE_RIGHT, LOW);
 
-    Colors color;
-    //char buf[100]; sprintf(buf, "red=%d, blue=%d", r,b);
+    //char buf[100]; 
+    //sprintf(buf, "LEFT: red=%d, blue=%d", rL,bL);
     //Serial.println(buf);
-    if (isBlue(r,   b, false)) color = BLUE;
-    else if (isRed(r,    b, false)) color = RED;
-    else if (isYellow(r, b, false)) color = YELLOW;
-    else                       color = BLACK;
 
-    //switch (color) {
-    //    case RED:    Serial.println("Right is red");    break;
-    //    case BLUE:   Serial.println("Right is blue");   break;
-    //    case YELLOW: Serial.println("Right is yellow"); break;
-    //    case BLACK:  Serial.println("Right is black");  break;
-    //    default:     Serial.println("We're fucked if we're reading this!");
-    //}
-    
-    return color;
+    //sprintf(buf, "RIGHT: red=%d, blue=%d", rR,bR);
+    //Serial.println(buf);
+
+    if (isBlue(rL,        bL, true)) left = BLUE;
+    else if (isRed(rL,    bL, true)) left = RED;
+    else if (isYellow(rL, bL, true)) left = YELLOW;
+    else                             left = BLACK;
+
+    if (isBlue(rR,        bR, false)) right = BLUE;
+    else if (isRed(rR,    bR, false)) right = RED;
+    else if (isYellow(rR, bR, false)) right = YELLOW;
+    else                              right = BLACK;
 }
 
 //
 // Test calibration by serial printing colors
 //
 void testPhotosensor(void) {
-    Colors colorLeft = readLeftSensor();
-    Colors colorRight = readRightSensor();
+    Colors left, right; readSensors(left, right);
 
     delay(100);
     // NOTE assumes Serial is setup via Serial.begin(9600)
-    switch (colorLeft) {
+    switch (left) {
         case RED:    Serial.println("Left is red");    break;
         case BLUE:   Serial.println("Left is blue");   break;
         case YELLOW: Serial.println("Left is yellow"); break;
@@ -118,7 +93,7 @@ void testPhotosensor(void) {
         default:     Serial.println("We're fucked if we're reading this!");
     }
 
-    switch (colorRight) {
+    switch (right) {
         case RED:    Serial.println("Right is red");    break;
         case BLUE:   Serial.println("Right is blue");   break;
         case YELLOW: Serial.println("Right is yellow"); break;
@@ -128,49 +103,44 @@ void testPhotosensor(void) {
 }
 
 void actionUntilColor(Colors c, void(*action)(void)) {
-    while (readLeftSensor() != c && readRightSensor() != c) action();
+    Colors left, right;
+
+    do {
+        readSensors(left, right);
+        action();
+    } while (left != c && right != c);
+
     stop();
 }
 
 bool followColorUntilColor(Colors c1, Colors c2) {
-    Colors colorLeft  = readLeftSensor();
-    Colors colorRight = readRightSensor();
+    Colors left, right; readSensors(left, right);
 
-    if (colorLeft == c2 && colorRight == c2)        {
-        stop(); 
-        return true;
+    if (left == c2 && right == c2) {
+        stop(); return true;
     }
-    else if (colorLeft != c2 && colorRight == c2) {
+    else if (left != c2 && right == c2) {
         turnRight();
-        do {
-            colorLeft = readLeftSensor();
-        } while (colorLeft != c2);
-
+        do { readSensors(left, right); } while (left != c2 && right == c2);
         stop();
     }
-    else if (colorLeft == c2 && colorRight != c2) {
+    else if (left == c2 && right != c2) {
         turnLeft();
-        do {
-            colorRight = readRightSensor();
-        } while (colorRight != c2);
-
+        do { readSensors(left, right); } while (right != c2 && left == c2);
         stop();
     }
-    else if ((colorLeft == c1 && colorRight == c1)) {
-        Serial.println("Both on color ");
-        forward();
-        return false;
+    else if ((left == c1 && right == c1)) {
+        forward(); return false;
     }
-    else if (colorLeft != c1 && colorRight != c1) {
-        Serial.println("Both off color ");
-        bool turning = false, left = true;
+    else if (left != c1 && right != c1) {
+        bool turning = false, turningLeft = true;
         int i = 0, prevMillis;
 
         do {
             if (!turning) { 
                 prevMillis = millis();
-                (left) ? turnLeft() : turnRight();
-                turning = true; left = !left;
+                (turningLeft) ? turnLeft() : turnRight();
+                turning = true; turningLeft = !turningLeft;
             }
 
             // turn other way after 100*i milliseconds
@@ -178,25 +148,19 @@ bool followColorUntilColor(Colors c1, Colors c2) {
                 turning = false; ++i;
             }
 
-            colorLeft  = readLeftSensor();
-            colorRight = readRightSensor();
-            if (colorLeft == c2 || colorRight == c2) return true;
-        } while (colorLeft != c1 && colorRight != c1);
-    }
-    else if (colorLeft == c1 && colorRight != c1) {
-        turnLeft();
-        do {
-            Serial.println("Right is off");
-            colorRight = readRightSensor();
-        } while (colorRight != c1 && colorRight != c2);
+            readSensors(left, right);
+            if (left == c2 || right == c2) return false;
+        } while (left != c1 && right != c1);
         stop();
     }
-    else if (colorLeft != c1 && colorRight == c1) {
+    else if (left == c1 && right != c1) {
+        turnLeft();
+        do { readSensors(left, right); } while (right != c1 && right != c2);
+        stop();
+    }
+    else if (left != c1 && right == c1) {
         turnRight();
-        do {
-            Serial.println("Left is off");
-            colorLeft  = readLeftSensor();
-        } while (colorLeft != c1 && colorLeft != c2);
+        do { readSensors(left, right); } while (left != c1 && left != c2);
         stop();
     }
 

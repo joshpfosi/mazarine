@@ -3,14 +3,11 @@
 
 enum Colors { RED, BLUE, YELLOW, BLACK };
 
-Colors readRightSensor (void);
-Colors readLeftSensor  (void);
+void readSensors(Colors &left, Colors &right);
 
 bool isBlue  (int red, int blue);
 bool isRed   (int red, int blue);
 bool isYellow(int red, int blue);
-
-Colors getColor(int red, int blue);
 
 void actionUntilColor(Colors c, void (*action)(void));
 bool followColorUntilColor(Colors c1, Colors c2);

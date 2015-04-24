@@ -94,7 +94,7 @@ void loop() {
 
     //while (!digitalRead(GO_SWITCH)) { delayMicroseconds(1); } // ON
 
-    isBot1 = false; //digitalRead(BOT_SWITCH);
+    isBot1 = true; //digitalRead(BOT_SWITCH);
 
     // GO state
     if (isBot1) bot1();
