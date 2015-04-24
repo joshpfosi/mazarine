@@ -13,68 +13,52 @@ void setupPhotosensor(void) {
     pinMode(PHOTO_BLUE_RIGHT, OUTPUT);
     pinMode(PHOTOLEFT,        INPUT);
     pinMode(PHOTORIGHT,       INPUT);
+
+    // red can be on at all times
+    digitalWrite(PHOTO_RED_LEFT,  HIGH);
+    digitalWrite(PHOTO_RED_RIGHT, HIGH);
 }
 
-bool isBlue(int red, int blue, bool left) { 
-    if (left) return (900 < red && red < 1024) && (500 < blue && blue < 650);
-    else      return (900 < red && red < 1024) && (150 < blue && blue < 250);
+static inline bool isBlue(int red, bool left) { 
+    if (left) return (970 < red && red < 980);
+    else      return (985 < red && red < 995);
 }
 
-bool isRed(int red, int blue, bool left) { 
-    if (left) return (700 < red && red < 800) && (900 < blue && blue < 1024);
-    else      return (800 < red && red < 900) && (650 < blue && blue < 750);
+static inline bool isRed(int red, bool left) { 
+    if (left) return (700 < red && red < 800);
+    else      return (800 < red && red < 900);
 }
 
-bool isYellow(int red, int blue, bool left) { 
-    if (left) return (600 < red && red < 700) && (750 < blue && blue < 850);
-    else      return (700 < red && red < 800) && (150 < blue && blue < 250);
+static inline bool isYellow(int red, bool left) { 
+    if (left) return (640 < red && red < 690);
+    else      return (770 < red && red < 800);
 }
 
 //
 // Read sensor value for red, blue and both
 //
 void readSensors(Colors &left, Colors &right) {
-    int rL, bL, rR, bR;
+    int rR, rL;
 
-    // illuminate RED and read 
-    digitalWrite(PHOTO_RED_LEFT,  HIGH);
-    digitalWrite(PHOTO_RED_RIGHT, HIGH);
-
-    delay(30);
     rL = analogRead(PHOTOLEFT);
     rR = analogRead(PHOTORIGHT);
 
-    // turn red off
-    digitalWrite(PHOTO_RED_LEFT,  LOW);
-    digitalWrite(PHOTO_RED_RIGHT, LOW);
-    
-    // illuminate BLUE and read
-    digitalWrite(PHOTO_BLUE_LEFT,  HIGH);
-    digitalWrite(PHOTO_BLUE_RIGHT, HIGH);
-
-    delay(30);
-    bL = analogRead(PHOTOLEFT);
-    bR = analogRead(PHOTORIGHT);
-
-    digitalWrite(PHOTO_BLUE_LEFT,  LOW);
-    digitalWrite(PHOTO_BLUE_RIGHT, LOW);
-
     //char buf[100]; 
-    //sprintf(buf, "LEFT: red=%d, blue=%d", rL,bL);
+    //sprintf(buf, "LEFT:  red=%d",rL);
     //Serial.println(buf);
 
-    //sprintf(buf, "RIGHT: red=%d, blue=%d", rR,bR);
+    //sprintf(buf, "RIGHT: red=%d", rR);
     //Serial.println(buf);
 
-    if (isBlue(rL,        bL, true)) left = BLUE;
-    else if (isRed(rL,    bL, true)) left = RED;
-    else if (isYellow(rL, bL, true)) left = YELLOW;
-    else                             left = BLACK;
+    if (isBlue(rR,        false)) right = BLUE;
+    else if (isRed(rR,    false)) right = RED;
+    else if (isYellow(rR, false)) right = YELLOW;
+    else                          right = BLACK;
 
-    if (isBlue(rR,        bR, false)) right = BLUE;
-    else if (isRed(rR,    bR, false)) right = RED;
-    else if (isYellow(rR, bR, false)) right = YELLOW;
-    else                              right = BLACK;
+    if (isBlue(rL,        true)) left = BLUE;
+    else if (isRed(rL,    true)) left = RED;
+    else if (isYellow(rL, true)) left = YELLOW;
+    else                         left = BLACK;
 }
 
 //
@@ -83,7 +67,7 @@ void readSensors(Colors &left, Colors &right) {
 void testPhotosensor(void) {
     Colors left, right; readSensors(left, right);
 
-    delay(100);
+    delay(500);
     // NOTE assumes Serial is setup via Serial.begin(9600)
     switch (left) {
         case RED:    Serial.println("Left is red");    break;
@@ -102,7 +86,7 @@ void testPhotosensor(void) {
     }
 }
 
-void actionUntilColor(Colors c, void(*action)(void)) {
+void actionUntilColor(Colors c, void (*action)(void)) {
     Colors left, right;
 
     do {

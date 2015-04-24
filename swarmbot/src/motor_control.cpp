@@ -13,7 +13,7 @@
 /* -------------------------- PRIVATE -------------------------- */
 
 #define SPEED_CONST 70
-#define TURN_CONST  4 // found experimentally
+#define TURN_CONST  3 // found experimentally
 
 void setupMotorControl(void) {
     pinMode(ML1, OUTPUT);
@@ -28,9 +28,9 @@ void setupMotorControl(void) {
 /* initialize to some speed */
 static int speed = SPEED_CONST;
 
-static void enable()  { 
-    analogWrite(EL, SPEED_CONST);
-    analogWrite(ER, SPEED_CONST);
+static void enable(int s)  { 
+    analogWrite(EL, s);
+    analogWrite(ER, s);
 }
 
 static void disable(void) { analogWrite(EL, 0);     analogWrite(ER, 0);     }
@@ -51,7 +51,7 @@ void forward(void) {
     digitalWrite(MR1, HIGH);
     digitalWrite(MR2, LOW);
 
-    enable();
+    enable(SPEED_CONST);
 }
 
 void backward(void) {
@@ -63,7 +63,7 @@ void backward(void) {
     digitalWrite(MR1, LOW);
     digitalWrite(MR2, HIGH);
 
-    enable();
+    enable(SPEED_CONST);
 }
 
 // turn both motors in opposite directions to pivot
@@ -91,7 +91,7 @@ void turn(int angle) {
         digitalWrite(MR2, LOW);
     }
 
-    enable();
+    enable(SPEED_CONST);
 
     angle = (angle > 0) ? angle : 0 - angle; // abs(angle)
     delay(angle * turn_constant);            // measured constant
@@ -110,7 +110,7 @@ void turnRight(void) {
     digitalWrite(MR1, HIGH);
     digitalWrite(MR2, LOW);
 
-    enable();
+    enable(50);
 }
 
 void turnLeft(void) {
@@ -124,7 +124,7 @@ void turnLeft(void) {
     digitalWrite(MR1, LOW);
     digitalWrite(MR2, HIGH);
 
-    enable();
+    enable(50);
 }
 
 void stop(void) { disable(); }

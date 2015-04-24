@@ -135,19 +135,21 @@ void bot1(void) {
     while (!followColorUntilColor(RED, YELLOW)) { delayMicroseconds(1); }
     Serial.println("Found yellow");
 
-    actionUntilColor(YELLOW, turnLeft);
     // Stops on yellow, flashing yellow LED twice
     stop();
     flashLed(YELLOW_LED); // pauses for 1 second to flash
     flashLed(YELLOW_LED); // pauses for 1 second to flash
 
     // Moves forward until red
+    Serial.println("Going straight until red");
     actionUntilColor(RED, forward);
 
     // Follows red
+    Serial.println("Following red until yellow");
     while (!followColorUntilColor(RED, YELLOW)) { delayMicroseconds(1); }
 
     // Stops on yellow, turns on yellow LED, turns 180 degrees
+    Serial.println("Turning until red");
     stop();
     digitalWrite(YELLOW_LED, HIGH);
     turn(180);
@@ -237,7 +239,6 @@ void bot2(void) {
     Serial.println("Found yellow");
 
     // Stops on yellow, flashing yellow LED twice
-    actionUntilColor(YELLOW, turnLeft);
 
     flashLed(YELLOW_LED);
     flashLed(YELLOW_LED);
