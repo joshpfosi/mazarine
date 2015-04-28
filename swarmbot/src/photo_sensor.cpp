@@ -15,24 +15,44 @@ void setupPhotosensor(void) {
     pinMode(PHOTORIGHT,       INPUT);
 
     // red can be on at all times
+#if MAZ
     digitalWrite(PHOTO_RED_LEFT,  HIGH);
     digitalWrite(PHOTO_RED_RIGHT, HIGH);
+#else
+    digitalWrite(PHOTO_BLUE_LEFT,  HIGH);
+    digitalWrite(PHOTO_BLUE_RIGHT, HIGH);
+#endif
+    
 }
 
-static inline bool isBlue(int red, bool left) { 
-    if (left) return (970 < red && red < 980);
-    else      return (985 < red && red < 995);
+#if MAZ
+static inline bool isBlue(int red, bool left) {
+    if (left) return (974 < red && red < 994);
+    else      return (982 < red && red < 1002);
 }
+static inline bool isRed(int red, bool left) {
+    if (left) return (796 < red && red < 846);
+    else      return (852 < red && red < 892);
+}
+static inline bool isYellow(int red, bool left) {
+    if (left) return (725 < red && red < 765);
+    else      return (803 < red && red < 833);
+}
+#else
+static inline bool isBlue(int red, bool left) {
+    if (left) return (825 < red && red < 845);
+    else      return (563 < red && red < 583);
+}
+static inline bool isRed(int red, bool left) {
+    if (left) return (190 < red && red < 210);
+    else      return (128 < red && red < 148);
+}
+static inline bool isYellow(int red, bool left) {
+    if (left) return (503 < red && red < 523);
+    else      return (324 < red && red < 344);
+}   
+#endif
 
-static inline bool isRed(int red, bool left) { 
-    if (left) return (700 < red && red < 800);
-    else      return (800 < red && red < 900);
-}
-
-static inline bool isYellow(int red, bool left) { 
-    if (left) return (640 < red && red < 690);
-    else      return (770 < red && red < 800);
-}
 
 //
 // Read sensor value for red, blue and both
@@ -43,12 +63,14 @@ void readSensors(Colors &left, Colors &right) {
     rL = analogRead(PHOTOLEFT);
     rR = analogRead(PHOTORIGHT);
 
-    //char buf[100]; 
-    //sprintf(buf, "LEFT:  red=%d",rL);
-    //Serial.println(buf);
+#if TEST_PHOTO
+    char buf[100]; 
+    sprintf(buf, "LEFT:  red=%d",rL);
+    Serial.println(buf);
 
-    //sprintf(buf, "RIGHT: red=%d", rR);
-    //Serial.println(buf);
+    sprintf(buf, "RIGHT: red=%d", rR);
+    Serial.println(buf);
+#endif
 
     if (isBlue(rR,        false)) right = BLUE;
     else if (isRed(rR,    false)) right = RED;
@@ -100,23 +122,19 @@ void actionUntilColor(Colors c, void (*action)(void)) {
 bool followColorUntilColor(Colors c1, Colors c2) {
     Colors left, right; readSensors(left, right);
 
-    if (left == c2 && right == c2) {
-        stop(); return true;
-    }
-    else if (left != c2 && right == c2) {
-        turnRight();
-        do { readSensors(left, right); } while (left != c2 && right == c2);
+    if (left == c2 || right == c2) {
+        Serial.println("Both on yellow");
+        forward();
+        delay(150);
         stop();
-    }
-    else if (left == c2 && right != c2) {
-        turnLeft();
-        do { readSensors(left, right); } while (right != c2 && left == c2);
-        stop();
+        return true;
     }
     else if ((left == c1 && right == c1)) {
+        Serial.println("Both on red");
         forward(); return false;
     }
     else if (left != c1 && right != c1) {
+        Serial.println("Both off red");
         bool turning = false, turningLeft = true;
         int i = 0, prevMillis;
 
@@ -133,20 +151,24 @@ bool followColorUntilColor(Colors c1, Colors c2) {
             }
 
             readSensors(left, right);
-            if (left == c2 || right == c2) return false;
+            if (left == c2 || right == c2) return true;
         } while (left != c1 && right != c1);
         stop();
     }
     else if (left == c1 && right != c1) {
+        Serial.println("Left is on red, right is off");
         turnLeft();
         do { readSensors(left, right); } while (right != c1 && right != c2);
         stop();
     }
     else if (left != c1 && right == c1) {
+        Serial.println("Right is on red, left is off");
         turnRight();
         do { readSensors(left, right); } while (left != c1 && left != c2);
         stop();
     }
+    
+    delay(50);
 
     return false;
 }

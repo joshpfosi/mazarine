@@ -13,7 +13,7 @@
 /* -------------------------- PRIVATE -------------------------- */
 
 #define SPEED_CONST 70
-#define TURN_CONST  3 // found experimentally
+#define TURN_CONST  5 // found experimentally
 
 void setupMotorControl(void) {
     pinMode(ML1, OUTPUT);
@@ -63,7 +63,7 @@ void backward(void) {
     digitalWrite(MR1, LOW);
     digitalWrite(MR2, HIGH);
 
-    enable(SPEED_CONST);
+    enable(2 * SPEED_CONST);
 }
 
 // turn both motors in opposite directions to pivot

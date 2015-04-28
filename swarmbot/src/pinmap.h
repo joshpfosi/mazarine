@@ -6,6 +6,11 @@
 
 #include "Arduino.h"
 
+#define MAZ         1
+#define CALIBRATION 0
+#define TEST_MOTOR  0
+#define TEST_PHOTO  0
+
 // Interrupt pins
 
 #define COLLISION_INT    0 // pin 2

@@ -69,30 +69,78 @@ void setup() {
 }
 
 void loop() {
-    // TEST COLLISION
-    //if (collisionHappened) {
-    //    for (int i = 0; i < NUM_BUMPERS; ++i) {
-    //        bumperHit[i] = digitalRead(bumpers[i]);
-    //
-    //        if (bumperHit[i]) {
-    //            Serial.println(i);
-    //            bumperHit[i] = false;
-    //        }
-    //    }
-    //}
+#if TEST_MOTOR
+    while (1) {
+        forward();
+        delay(1000);
+        backward();
+        delay(2000);
+        stop();
+        delay(500);
+    }
+#endif
 
-    // TEST MOTOR CONTROL
-    //forward();
-    //delay(1000);
-    //backward();
-    //delay(2000);
-    //stop();
-    //delay(500);
+#if TEST_PHOTO
+    while (1) testPhotosensor();
+#endif
+    
+#if CALIBRATION
+    bool hitBumper = false;
+    int avgs[3][2] = { {0,0}, {0,0}, {0,0} };
+    int avgNum = 64;
+    for (int i = 0; i < 3; ++i) {
+        unsigned sumLeft = 0, sumRight = 0, count = 0;
 
-    // TEST PHOTOSENSOR
-    //while (1) testPhotosensor();
+        while (!hitBumper) {
+            for (int i = 0; i < NUM_BUMPERS; ++i) {
+                if (digitalRead(bumpers[i])) {
+                    hitBumper = true;
+                    delay(1000);
+                }
+            }
+        }
 
-    //while (!digitalRead(GO_SWITCH)) { delayMicroseconds(1); } // ON
+        for (int j = 0; j < avgNum; ++j) {
+            sumLeft  += analogRead(PHOTOLEFT);
+            sumRight += analogRead(PHOTORIGHT);
+            delay(1);
+        }
+
+
+        avgs[i][0] = sumLeft  / avgNum;
+        avgs[i][1] = sumRight / avgNum;
+        
+        hitBumper = false;
+    }
+
+    char code[1000];
+    const char buf[] = "static inline bool isBlue(int red, bool left) {\n\
+    if (left) return (%d < red && red < %d);\n\
+    else      return (%d < red && red < %d);\n\
+}\n\
+static inline bool isRed(int red, bool left) {\n\
+    if (left) return (%d < red && red < %d);\n\
+    else      return (%d < red && red < %d);\n\
+}\n\
+static inline bool isYellow(int red, bool left) { \n\
+    if (left) return (%d < red && red < %d);\n\
+    else      return (%d < red && red < %d);\n\
+} ";
+
+    sprintf(code, buf, avgs[0][0] - 10, avgs[0][0] + 10, // BLUE
+                 avgs[0][1] - 10, avgs[0][1] + 10,
+
+                 avgs[1][1] - 20, avgs[1][1] + 20,
+
+                 avgs[2][0] - 10, avgs[2][0] + 20, // YELLOW
+                 avgs[2][1] - 10, avgs[2][1] + 20
+                 );
+
+    Serial.println(code);
+    while (1) {};
+#endif
+
+    //while (!digitalRead(GO_SWITCH)) {} // ON
 
     isBot1 = true; //digitalRead(BOT_SWITCH);
 
@@ -119,50 +167,39 @@ void bot1(void) {
     Serial.println("Hit wall");
 
 
-    // Assumes it hit the correct wall and turns a predetermined angle to the left
-    stop(); delay(200); // resolve collision by backing up
-    backward();
-    delay(100);
-    turn(-210); // negative to turn right
-
-    // Moves forward until red and stops
-    actionUntilColor(RED, forward);
+    // Moves backward until red and stops
+    actionUntilColor(RED, backward);
+    turn(-30); // negative to turn right
+    actionUntilColor(RED, turnRight);
 
     // Flash a red LED
     flashLed(RED_LED); // pauses for 1 second to flash
 
     // Follows red
-    while (!followColorUntilColor(RED, YELLOW)) { delayMicroseconds(1); }
+    while (!followColorUntilColor(RED, YELLOW)) {}
     Serial.println("Found yellow");
 
     // Stops on yellow, flashing yellow LED twice
-    stop();
     flashLed(YELLOW_LED); // pauses for 1 second to flash
     flashLed(YELLOW_LED); // pauses for 1 second to flash
-
-    // Moves forward until red
-    Serial.println("Going straight until red");
-    actionUntilColor(RED, forward);
+    
+    // Follows yellow
+    Serial.println("Following yellow until red");
+    while (!followColorUntilColor(YELLOW, RED)) {}
 
     // Follows red
     Serial.println("Following red until yellow");
-    while (!followColorUntilColor(RED, YELLOW)) { delayMicroseconds(1); }
+    while (!followColorUntilColor(RED, YELLOW)) {}
 
     // Stops on yellow, turns on yellow LED, turns 180 degrees
     Serial.println("Turning until red");
     stop();
     digitalWrite(YELLOW_LED, HIGH);
-    turn(180);
+    turn(180);                       // ensures we escape red and actually turn
     actionUntilColor(RED, turnLeft);
 
-    // Moves forward until red
-    actionUntilColor(RED, forward);
-
     // Follows red
-    while (!followColorUntilColor(RED, YELLOW)) { delayMicroseconds(1); }
-
-    // Stops on yellow
-    stop();
+    while (!followColorUntilColor(RED, YELLOW)) {}
 
     // Communicates to Bot 2: `START`
     delay(500);
@@ -173,11 +210,11 @@ void bot1(void) {
     // Flashes green LED
     flashLed(GREEN_LED);
 
-    // Moves forward until red
-    actionUntilColor(RED, forward);
+    // Follows red
+    while (!followColorUntilColor(YELLOW, RED)) {}
 
     // Follows red, stops on yellow
-    while (!followColorUntilColor(RED, YELLOW)) { delayMicroseconds(1); }
+    while (!followColorUntilColor(RED, YELLOW)) {}
 
     // Turns on green LED
     flashLed(GREEN_LED);
@@ -222,20 +259,16 @@ void bot2(void) {
     }
     Serial.println("Hit wall");
 
-    // Assumes it hit the correct wall and turns a predetermined angle to the left
-    stop(); delay(200); // resolve collision by backing up
-    backward();
-    delay(100);
-    turn(300); // negative to turn left CALIBRATED
-    
-    // Moves forward 
-    actionUntilColor(BLUE, forward);
+    // Moves backward until blue and stops
+    actionUntilColor(BLUE, backward);
+    turn(60); // positive to turn left
+    actionUntilColor(BLUE, turnLeft);
 
     // Stops on blue, flashing a blue LED
     flashLed(BLUE_LED);
 
     // Turns a predetermined angle to the right, and follows blue
-    while (!followColorUntilColor(BLUE, YELLOW)) { delayMicroseconds(1); }
+    while (!followColorUntilColor(BLUE, YELLOW)) {}
     Serial.println("Found yellow");
 
     // Stops on yellow, flashing yellow LED twice
@@ -243,13 +276,16 @@ void bot2(void) {
     flashLed(YELLOW_LED);
     flashLed(YELLOW_LED);
 
-    // Moves forward
-    actionUntilColor(BLUE, forward);
+    // Follows yellow
+    Serial.println("Following yellow until blue");
+    while (!followColorUntilColor(YELLOW, BLUE)) {}
 
     // Follows blue
-    while (!followColorUntilColor(BLUE, YELLOW)) { delayMicroseconds(1); }
+    Serial.println("Following blue until yellow");
+    while (!followColorUntilColor(BLUE, YELLOW)) {}
 
     // Stops on yellow, turns on yellow LED, turns 180 degrees
+    Serial.println("Turning until blue");
     stop();
     digitalWrite(YELLOW_LED, HIGH);
     turn(-180);
@@ -260,11 +296,8 @@ void bot2(void) {
     // Flash yellow continuously
     // TODO flash continuously
 
-    // Moves forward until blue
-    actionUntilColor(BLUE, forward);
-
     // Follows blue, stops on yellow
-    while (!followColorUntilColor(BLUE, YELLOW)) { delayMicroseconds(1); }
+    while (!followColorUntilColor(BLUE, YELLOW)) {}
 
     // Communicates to Bot 1: `STOP_YELLOW`
     delay(100);
@@ -272,11 +305,11 @@ void bot2(void) {
     // Stop flashing yellow LED
     digitalWrite(YELLOW_LED, LOW);
 
-    // Moves forward until blue
-    actionUntilColor(BLUE, forward);
+    // Follows yellow until blue
+    while (!followColorUntilColor(YELLOW, BLUE)) {}
 
     // Follows blue, stops on yellow
-    while (!followColorUntilColor(BLUE, YELLOW)) { delayMicroseconds(1); }
+    while (!followColorUntilColor(BLUE, YELLOW)) {}
 
     // Communicates to Bot 1: `DONE`
     delay(100);
