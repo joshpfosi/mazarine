@@ -1,6 +1,7 @@
 #include "pinmap.h"
 #include "motor_control.h"
 #include "photo_sensor.h"
+#include "collision.h"
 
 // ----------------------------------------------------------------------------
 // State variables
@@ -12,38 +13,9 @@ void bot1(void);
 void bot2(void);
 
 // Helper routines
-inline void flashLed       (int ledPin);
+inline void flashLed              (int ledPin);
 inline void actionUntilColor      (Colors c, void (*action)(void));
 inline bool followColorUntilColor (Colors c1, Colors c2);
-
-// ----------------------------------------------------------------------------
-// collision.h
-#define NUM_BUMPERS 5
-
-bool bumperHit[NUM_BUMPERS];
-volatile bool collisionHappened = false;
-const int bumpers[] = { FL, FR, L, R, B };
-// ----------------------------------------------------------------------------
-
-// ----------------------------------------------------------------------------
-// collision.cpp
-#define DEBOUNCE_TIME 10000 // ms
-
-void detectCollision(void) {
-    static unsigned long lastInterruptTime;
-    unsigned long currTime = micros();
-
-    if (currTime - lastInterruptTime > DEBOUNCE_TIME) {
-        collisionHappened = true;
-        lastInterruptTime = currTime;
-    }
-}
-
-void setupCollision(void) {
-    attachInterrupt(COLLISION_INT, detectCollision, RISING);
-    for (int i = 0; i < NUM_BUMPERS; ++i) pinMode(bumpers[i], INPUT);
-}
-// ----------------------------------------------------------------------------
 
 void setup() {
     // ------------------------------------------------------------------------
@@ -130,7 +102,6 @@ static inline bool isYellow(int red, bool left) { \n\
                  );
 
     Serial.println(code);
-    while (1) {};
 #endif
 
     //while (!digitalRead(GO_SWITCH)) {} // ON
@@ -322,7 +293,7 @@ inline void flashLed(int ledPin) {
     delay(200);
 }
 
-void actionUntilColor(Colors c, void (*action)(void)) {
+inline void actionUntilColor(Colors c, void (*action)(void)) {
     Colors left, right;
 
     do {
@@ -333,7 +304,7 @@ void actionUntilColor(Colors c, void (*action)(void)) {
     stop();
 }
 
-bool followColorUntilColor(Colors c1, Colors c2) {
+inline bool followColorUntilColor(Colors c1, Colors c2) {
     Colors left, right; readSensors(left, right);
 
     if (left == c2 || right == c2) {
@@ -382,3 +353,22 @@ bool followColorUntilColor(Colors c1, Colors c2) {
     return false;
 }
 
+// ----------------------------------------------------------------------------
+// collision.cpp
+#define DEBOUNCE_TIME 10000 // ms
+
+void detectCollision(void) {
+    static unsigned long lastInterruptTime;
+    unsigned long currTime = micros();
+
+    if (currTime - lastInterruptTime > DEBOUNCE_TIME) {
+        collisionHappened = true;
+        lastInterruptTime = currTime;
+    }
+}
+
+void setupCollision(void) {
+    attachInterrupt(COLLISION_INT, detectCollision, RISING);
+    for (int i = 0; i < NUM_BUMPERS; ++i) pinMode(bumpers[i], INPUT);
+}
+// ----------------------------------------------------------------------------

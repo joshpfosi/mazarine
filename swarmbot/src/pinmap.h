@@ -20,10 +20,10 @@
 
 #define GO_SWITCH        14
 #define BOT_SWITCH       15
-#define RED_LED          13
-#define YELLOW_LED       13
-#define GREEN_LED        1
-#define BLUE_LED         1
+#define RED_LED          32
+#define YELLOW_LED       33
+#define GREEN_LED        34
+#define BLUE_LED         35
 
 // Photosensor pins
 
