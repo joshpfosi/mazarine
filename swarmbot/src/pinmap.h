@@ -6,7 +6,7 @@
 
 #include "Arduino.h"
 
-#define MAZ         0
+#define MAZ         1
 #define CALIBRATION 0
 #define TEST_MOTOR  0
 #define TEST_PHOTO  0

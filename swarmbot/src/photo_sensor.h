@@ -3,12 +3,8 @@
 
 enum Colors { RED, BLUE, YELLOW, BLACK };
 
-void readSensors(Colors &left, Colors &right);
-
-void actionUntilColor(Colors c, void (*action)(void));
-bool followColorUntilColor(Colors c1, Colors c2);
-
-void setupPhotosensor(void);
-void testPhotosensor(void);
+void readSensors      (Colors &left, Colors &right);
+void setupPhotosensor (void);
+void testPhotosensor  (void);
 
 #endif // PHOTO_SENSOR_H

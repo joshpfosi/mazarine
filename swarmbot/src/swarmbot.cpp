@@ -12,22 +12,13 @@ void bot1(void);
 void bot2(void);
 
 // Helper routines
-static inline void flashLed(int ledPin);
+inline void flashLed       (int ledPin);
+inline void actionUntilColor      (Colors c, void (*action)(void));
+inline bool followColorUntilColor (Colors c1, Colors c2);
 
 // ----------------------------------------------------------------------------
 // collision.h
 #define NUM_BUMPERS 5
-#define DEBOUNCE_TIME 10000 // ms
-
-// indices into boolean array for each bumper
-// and bumper array for each pin
-#define FRONT_LEFT  0
-#define FRONT_RIGHT 1
-#define LEFT        2
-#define RIGHT       3
-#define BACK        4
-
-// input pins for reading if a bumper is pressed
 
 bool bumperHit[NUM_BUMPERS];
 volatile bool collisionHappened = false;
@@ -36,6 +27,8 @@ const int bumpers[] = { FL, FR, L, R, B };
 
 // ----------------------------------------------------------------------------
 // collision.cpp
+#define DEBOUNCE_TIME 10000 // ms
+
 void detectCollision(void) {
     static unsigned long lastInterruptTime;
     unsigned long currTime = micros();
@@ -322,9 +315,70 @@ void bot2(void) {
 // Helper Routines
 // ----------------------------------------------------------------------------
 
-static inline void flashLed(int ledPin) {
+inline void flashLed(int ledPin) {
     digitalWrite(ledPin, HIGH);
     delay(200);
     digitalWrite(ledPin, LOW);
     delay(200);
 }
+
+void actionUntilColor(Colors c, void (*action)(void)) {
+    Colors left, right;
+
+    do {
+        readSensors(left, right);
+        action();
+    } while (left != c && right != c);
+
+    stop();
+}
+
+bool followColorUntilColor(Colors c1, Colors c2) {
+    Colors left, right; readSensors(left, right);
+
+    if (left == c2 || right == c2) {
+        forward();
+        delay(150);
+        stop();
+        return true;
+    }
+    else if ((left == c1 && right == c1)) {
+        forward();
+    }
+    else if (left != c1 && right != c1) {
+        bool turning = false, turningLeft = true;
+        int i = 0, prevMillis;
+
+        do {
+            if (!turning) { 
+                prevMillis = millis();
+                (turningLeft) ? turnLeft() : turnRight();
+                turning = true; turningLeft = !turningLeft;
+            }
+
+            // turn other way after 100*i milliseconds
+            if (millis() > (200 * i) + prevMillis) {
+                turning = false; ++i;
+            }
+
+            readSensors(left, right);
+            if (left == c2 || right == c2) return true;
+        } while (left != c1 && right != c1);
+        stop();
+    }
+    else if (left == c1 && right != c1) {
+        turnLeft();
+        do { readSensors(left, right); } while (right != c1 && right != c2);
+        stop();
+    }
+    else if (left != c1 && right == c1) {
+        turnRight();
+        do { readSensors(left, right); } while (left != c1 && left != c2);
+        stop();
+    }
+    
+    delay(50);
+
+    return false;
+}
+

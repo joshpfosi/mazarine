@@ -4,7 +4,6 @@
 
 #include "pinmap.h"
 #include "photo_sensor.h"
-#include "motor_control.h"
 
 void setupPhotosensor(void) {
     pinMode(PHOTO_RED_LEFT,   OUTPUT);
@@ -18,7 +17,7 @@ void setupPhotosensor(void) {
 #if MAZ
     digitalWrite(PHOTO_RED_LEFT,  HIGH);
     digitalWrite(PHOTO_RED_RIGHT, HIGH);
-#else
+#else // Erythrean uses blue not red
     digitalWrite(PHOTO_BLUE_LEFT,  HIGH);
     digitalWrite(PHOTO_BLUE_RIGHT, HIGH);
 #endif
@@ -106,70 +105,5 @@ void testPhotosensor(void) {
         case BLACK:  Serial.println("Right is black");  break;
         default:     Serial.println("We're fucked if we're reading this!");
     }
-}
-
-void actionUntilColor(Colors c, void (*action)(void)) {
-    Colors left, right;
-
-    do {
-        readSensors(left, right);
-        action();
-    } while (left != c && right != c);
-
-    stop();
-}
-
-bool followColorUntilColor(Colors c1, Colors c2) {
-    Colors left, right; readSensors(left, right);
-
-    if (left == c2 || right == c2) {
-        Serial.println("Both on yellow");
-        forward();
-        delay(150);
-        stop();
-        return true;
-    }
-    else if ((left == c1 && right == c1)) {
-        Serial.println("Both on red");
-        forward(); return false;
-    }
-    else if (left != c1 && right != c1) {
-        Serial.println("Both off red");
-        bool turning = false, turningLeft = true;
-        int i = 0, prevMillis;
-
-        do {
-            if (!turning) { 
-                prevMillis = millis();
-                (turningLeft) ? turnLeft() : turnRight();
-                turning = true; turningLeft = !turningLeft;
-            }
-
-            // turn other way after 100*i milliseconds
-            if (millis() > (200 * i) + prevMillis) {
-                turning = false; ++i;
-            }
-
-            readSensors(left, right);
-            if (left == c2 || right == c2) return true;
-        } while (left != c1 && right != c1);
-        stop();
-    }
-    else if (left == c1 && right != c1) {
-        Serial.println("Left is on red, right is off");
-        turnLeft();
-        do { readSensors(left, right); } while (right != c1 && right != c2);
-        stop();
-    }
-    else if (left != c1 && right == c1) {
-        Serial.println("Right is on red, left is off");
-        turnRight();
-        do { readSensors(left, right); } while (left != c1 && left != c2);
-        stop();
-    }
-    
-    delay(50);
-
-    return false;
 }
 
