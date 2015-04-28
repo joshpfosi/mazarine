@@ -19,12 +19,16 @@ inline bool followColorUntilColor (Colors c1, Colors c2);
 
 void setup() {
     // ------------------------------------------------------------------------
-    // Set up general Bot pins
-    //pinMode( GO_SWITCH,  INPUT);
-    //pinMode( BOT_SWITCH, INPUT);
-    pinMode( RED_LED,    OUTPUT);
-    pinMode( YELLOW_LED, OUTPUT);
+    // Set up general bot pins
     // ------------------------------------------------------------------------
+
+    pinMode(CALIB_SWITCH, INPUT);
+    pinMode(BOT_SWITCH,   INPUT);
+
+    pinMode(RED_LED,      OUTPUT);
+    pinMode(YELLOW_LED,   OUTPUT);
+    pinMode(GREEN_LED,    OUTPUT);
+    pinMode(BLUE_LED,     OUTPUT);
 
     Serial.begin(9600);
 
@@ -104,15 +108,13 @@ static inline bool isYellow(int red, bool left) { \n\
     Serial.println(code);
 #endif
 
-    //while (!digitalRead(GO_SWITCH)) {} // ON
-
-    isBot1 = true; //digitalRead(BOT_SWITCH);
+    isBot1 = digitalRead(BOT_SWITCH);
 
     // GO state
     if (isBot1) bot1();
     else        bot2();
 
-    while (1) {};
+    while (1); // stop forever
 }
 
 void bot1(void) {

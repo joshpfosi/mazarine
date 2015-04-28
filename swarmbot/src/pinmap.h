@@ -18,7 +18,7 @@
 
 // Overall pins
 
-#define GO_SWITCH        14
+#define CALIB_SWITCH     14
 #define BOT_SWITCH       15
 #define RED_LED          32
 #define YELLOW_LED       33
