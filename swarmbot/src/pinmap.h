@@ -6,7 +6,7 @@
 
 #include "Arduino.h"
 
-#define MAZ         1
+#define MAZ         0
 #define CALIBRATION 0
 #define TEST_MOTOR  0
 #define TEST_PHOTO  0
@@ -16,7 +16,7 @@
 #define COLLISION_INT    0 // pin 2
 #define COMM_INT         1 // pin 3
 
-// Overall pins TODO new name
+// Overall pins
 
 #define GO_SWITCH        14
 #define BOT_SWITCH       15

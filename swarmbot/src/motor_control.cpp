@@ -12,7 +12,20 @@
 
 /* -------------------------- PRIVATE -------------------------- */
 
+#if MAZ
+
 #define SPEED_CONST 70
+#define LEFT_CALIB  1
+#define RIGHT_CALIB 1
+
+#else
+
+#define SPEED_CONST 100
+#define LEFT_CALIB  1.2
+#define RIGHT_CALIB 1
+
+#endif
+
 #define TURN_CONST  5 // found experimentally
 
 void setupMotorControl(void) {
@@ -29,11 +42,11 @@ void setupMotorControl(void) {
 static int speed = SPEED_CONST;
 
 static void enable(int s)  { 
-    analogWrite(EL, s);
-    analogWrite(ER, s);
+    analogWrite(EL, LEFT_CALIB  * s);
+    analogWrite(ER, RIGHT_CALIB * s);
 }
 
-static void disable(void) { analogWrite(EL, 0);     analogWrite(ER, 0);     }
+static void disable(void) { analogWrite(EL, 0); analogWrite(ER, 0);     }
 
 /* -------------------------- INTERFACE -------------------------- */
 

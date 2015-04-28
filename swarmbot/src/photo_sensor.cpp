@@ -40,17 +40,17 @@ static inline bool isYellow(int red, bool left) {
 }
 #else
 static inline bool isBlue(int red, bool left) {
-    if (left) return (825 < red && red < 845);
-    else      return (563 < red && red < 583);
+    if (left) return (815 < red && red < 844);
+    else      return (650 < red && red < 720);
 }
 static inline bool isRed(int red, bool left) {
-    if (left) return (190 < red && red < 210);
-    else      return (128 < red && red < 148);
+    if (left) return (200 < red && red < 250);
+    else      return (140 < red && red < 200);
 }
 static inline bool isYellow(int red, bool left) {
-    if (left) return (503 < red && red < 523);
-    else      return (324 < red && red < 344);
-}   
+    if (left) return (540 < red && red < 630);
+    else      return (380 < red && red < 500);
+}
 #endif
 
 
