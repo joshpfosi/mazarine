@@ -27,4 +27,16 @@ void receive(unsigned bits[], unsigned len);
 /* check sent message is received message */
 bool checkMsg(const unsigned msgToCheck[], const unsigned correctMsg[], unsigned len);
 
+/* sending and waiting until specific message is received */
+void waiting(const unsigned msg[], const unsigned optionalMsg[] );  // overloaded with transmitting message
+void waiting(const unsigned msg[]);
+
+/* received message buffer */
+static const unsigned ack[]      = { 0,0,0,0,1,1,1,1 };
+static unsigned recMsg[]         = { 0,0,0,0,0,0,0,0,
+                                     0,0,0,0,0,0,0,0 };
+
+/* communication flag */
+static bool receiving    = false;
+
 #endif // COMMUNICATION_H
