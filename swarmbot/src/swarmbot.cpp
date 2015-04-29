@@ -2,6 +2,7 @@
 #include "motor_control.h"
 #include "photo_sensor.h"
 #include "collision.h"
+#include "communication.h"
 
 // ----------------------------------------------------------------------------
 // State variables
@@ -16,6 +17,14 @@ void bot2(void);
 inline void flashLed              (int ledPin);
 inline void actionUntilColor      (Colors c, void (*action)(void));
 inline bool followColorUntilColor (Colors c1, Colors c2);
+
+/* Communication messages */
+static const unsigned transMsg[] = { 1,1,0,0,1,1,0,0 };
+static const unsigned startMsg[] = { 1,0,1,0,1,0,1,0 };
+static const unsigned toxicMsg[] = { 1,1,0,0,1,1,0,0 };
+static const unsigned stopMsg[]  = { 0,0,1,1,0,0,1,1 };
+static const unsigned doneMsg[]  = { 1,1,1,1,1,1,1,1 };
+static const unsigned ack[]      = { 0,0,0,0,1,1,1,1 };
 
 void setup() {
     // ------------------------------------------------------------------------
@@ -35,6 +44,7 @@ void setup() {
     setupPhotosensor();
     setupMotorControl();
     setupCollision();
+    setupCommunication();
 }
 
 void loop() {
@@ -51,6 +61,28 @@ void loop() {
 
 #if TEST_PHOTO
     while (1) testPhotosensor();
+#endif
+
+#if TEST_COMM
+
+    // TODO this should read isBot1 and decide
+#if MAZ
+    while(1) {
+        sendAndWait(transMsg, ack);
+        delay(2000);
+    }
+#else
+    while (1) {
+        Serial.println("Waiting for transMsg...");
+        waiting(transMsg);
+
+        Serial.println("Sending ack...");
+        transmit(ack, MSG_LEN); // send acknowledgement only after msg received
+
+        delay(2000);
+    }
+#endif
+
 #endif
     
 #if CALIBRATION
