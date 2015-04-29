@@ -15,9 +15,7 @@
 #define TIMEOUT      1000
 
 const unsigned hsMsg[]    = { 1,1,1,1,0,0,0,0 };
-const unsigned ack[]      = { 0,0,0,0,1,1,1,1 };
 
-static bool receiving    = false;
 
 /* -------------------------- PRIVATE -------------------------- */
 
@@ -87,3 +85,18 @@ bool checkMsg(const unsigned msgToCheck[], const unsigned correctMsg[], unsigned
     return true;
 }
 
+void waiting(const unsigned msg[], const unsigned optionalMsg[] ) {
+  do {
+    do { transmit(optionalMsg, MSG_LEN); }
+    while (!receiving);
+    receive(recMsg, MSG_LEN);
+  } while (!checkMsg(recMsg, msg, MSG_LEN));
+}
+
+void waiting(const unsigned msg[]) {
+  do {
+    do { delayMicroseconds(1); }
+    while (!receiving);
+    receive(recMsg, MSG_LEN);
+  } while (!checkMsg(recMsg, msg, MSG_LEN));
+}
