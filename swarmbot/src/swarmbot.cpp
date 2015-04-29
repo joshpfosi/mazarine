@@ -38,6 +38,7 @@ void setup() {
     pinMode(YELLOW_LED,   OUTPUT);
     pinMode(GREEN_LED,    OUTPUT);
     pinMode(BLUE_LED,     OUTPUT);
+    pinMode(13, OUTPUT); // debugging
 
     Serial.begin(9600);
 
@@ -66,10 +67,11 @@ void loop() {
 #if TEST_COMM
 
     // TODO this should read isBot1 and decide
-#if MAZ
+#if TRANSMIT
     while(1) {
+        Serial.println("Sending transMsg and waiting for ack...");
         sendAndWait(transMsg, ack);
-        delay(2000);
+        delay(20000);
     }
 #else
     while (1) {
@@ -79,7 +81,7 @@ void loop() {
         Serial.println("Sending ack...");
         transmit(ack, MSG_LEN); // send acknowledgement only after msg received
 
-        delay(2000);
+        delay(20000);
     }
 #endif
 

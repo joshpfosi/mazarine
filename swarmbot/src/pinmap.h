@@ -6,16 +6,17 @@
 
 #include "Arduino.h"
 
-#define MAZ         0
+#define MAZ         1
 #define CALIBRATION 0
 #define TEST_MOTOR  0
 #define TEST_PHOTO  0
 #define TEST_COMM   1
+#define TRANSMIT    1
 
 // Interrupt pins
 
-#define COLLISION_INT    1 // pin 3
 #define COMM_INT         0 // pin 2
+#define COLLISION_INT    1 // pin 3
 
 // Overall pins
 

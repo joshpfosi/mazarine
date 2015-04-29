@@ -23,7 +23,6 @@ static unsigned recMsg[]    = { 0,0,0,0,0,0,0,0,
 // communication flag
 static bool receiving    = false;
 
-
 /* -------------------------- PRIVATE -------------------------- */
 
 void setupCommunication(void) {
@@ -103,25 +102,35 @@ void sendAndWait(const unsigned msgToSend[], const unsigned confirmation[]) {
     do {
         Serial.println("Transmitting until ack...");
         receiving = false;
-        while (!receiving) {
+
+        while (1) {
+            unsigned long prevMillis = millis();
+
             transmit(msgToSend, MSG_LEN);
-            delay(500);
+
+            // wait until receiving or timeout
+            while (!receiving && millis() - prevMillis < 1000) {}
+
+            if (receiving) break;
         }
 
-        Serial.println("Receiving ack...");
+        Serial.print("Receiving ack: ");
         receive(recMsg, MSG_LEN);
+        for (int i = 0; i < 2 * MSG_LEN; ++i) Serial.print(recMsg[i]);
+        Serial.println("\n");
     } while (!checkMsg(recMsg, confirmation, MSG_LEN));
 }
 
 // waiting for a communication
 void waiting(const unsigned msg[]) {
-    digitalWrite(TRANSMIT_PIN, LOW); // needed for an unknown reason
+    //digitalWrite(TRANSMIT_PIN, LOW); // needed for an unknown reason
     do {
         receiving = false;
         while (!receiving) { delayMicroseconds(1); }
 
         receive(recMsg, MSG_LEN);
+        Serial.print("Transmitted message: ");
         for (int i = 0; i < 2 * MSG_LEN; ++i) Serial.print(recMsg[i]);
-        Serial.print("\n");
+        Serial.println("\n");
     } while (!checkMsg(recMsg, msg, MSG_LEN));
 }
