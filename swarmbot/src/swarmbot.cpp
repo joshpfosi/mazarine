@@ -18,14 +18,6 @@ inline void flashLed              (int ledPin);
 inline void actionUntilColor      (Colors c, void (*action)(void));
 inline bool followColorUntilColor (Colors c1, Colors c2);
 
-/* Communication messages */
-static const unsigned transMsg[] = { 1,1,0,0,1,1,0,0 };
-static const unsigned startMsg[] = { 1,0,1,0,1,0,1,0 };
-static const unsigned toxicMsg[] = { 1,1,0,0,1,1,0,0 };
-static const unsigned stopMsg[]  = { 0,0,1,1,0,0,1,1 };
-static const unsigned doneMsg[]  = { 1,1,1,1,1,1,1,1 };
-static const unsigned ack[]      = { 0,0,0,0,1,1,1,1 };
-
 void setup() {
     // ------------------------------------------------------------------------
     // Set up general bot pins
@@ -38,7 +30,6 @@ void setup() {
     pinMode(YELLOW_LED,   OUTPUT);
     pinMode(GREEN_LED,    OUTPUT);
     pinMode(BLUE_LED,     OUTPUT);
-    pinMode(13, OUTPUT); // debugging
 
     Serial.begin(9600);
 
@@ -69,19 +60,17 @@ void loop() {
     // TODO this should read isBot1 and decide
 #if TRANSMIT
     while(1) {
+        delay(1000);
+
         Serial.println("Sending transMsg and waiting for ack...");
-        sendAndWait(transMsg, ack);
-        delay(20000);
+        sendAndWait(toxicMsg, ack);
+        delay(10000);
     }
 #else
     while (1) {
         Serial.println("Waiting for transMsg...");
-        waiting(transMsg);
-
-        Serial.println("Sending ack...");
-        transmit(ack, MSG_LEN); // send acknowledgement only after msg received
-
-        delay(20000);
+        waiting(toxicMsg);
+        delay(10000);
     }
 #endif
 

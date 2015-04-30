@@ -8,7 +8,7 @@
 #include "Arduino.h"
 #include "pinmap.h"
 
-#define MSG_LEN 8
+#define MSG_LEN 128
 
 // ISR
 void setReceiving(void);
@@ -23,7 +23,7 @@ void transmit(const unsigned msg[], unsigned len);
 void sendBits(const unsigned bits[], unsigned len);
 
 // receive bits of length len
-void receive(unsigned bits[], unsigned len);
+bool receive(unsigned bits[], unsigned len);
 
 // check sent message is received message
 bool checkMsg(const unsigned msgToCheck[], const unsigned correctMsg[], unsigned len);

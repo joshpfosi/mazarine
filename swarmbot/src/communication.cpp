@@ -9,19 +9,23 @@
 #include "communication.h"
 #include "pinmap.h"
 
-#define CARRIER      5
-#define DATA_DELAY   416  //  1/(1.2*10^3)/2 = 416 aka 1.2 kHz
-#define BIT_SIZE     25
-#define TIMEOUT      1000
-
-const unsigned hsMsg[]    = { 1,1,1,1,0,0,0,0 };
+#define CARRIER        5
+#define DATA_DELAY     416  //  1/(1.2*10^3)/2 = 416 aka 1.2 kHz
+#define BIT_SIZE       25
+#define TIMEOUT        1000
+#define READ_THRESHOLD 700
 
 // received message buffer
-static unsigned recMsg[]    = { 0,0,0,0,0,0,0,0,
-                                0,0,0,0,0,0,0,0 };
-
-// communication flag
-static bool receiving    = false;
+static unsigned recMsg[] = { 
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+};
 
 /* -------------------------- PRIVATE -------------------------- */
 
@@ -29,9 +33,6 @@ void setupCommunication(void) {
     pinMode(RECEIVE_PIN,  INPUT);
     pinMode(TRANSMIT_PIN, OUTPUT);
     pinMode(CARRIER,      OUTPUT);
-
-    // use interrupts on the input comm pin to manage state of communication subsystem
-    attachInterrupt(COMM_INT, setReceiving, RISING);
 
     TCCR3A = _BV(COM3A0) | _BV(COM3B0) | _BV(WGM30) | _BV(WGM31);
     // sets COM Output Mode to FastPWM with toggle of OC3A on compare match with OCR3A
@@ -45,10 +46,7 @@ void setupCommunication(void) {
     // generate 20kHz when OCR3A=50
 }
 
-void setReceiving(void) { receiving = true; }
-
 /* -------------------------- INTERFACE -------------------------- */
-
 
 void sendBits(const unsigned bits[], unsigned len) {
     for (unsigned i = 0; i < len; ++i) {
@@ -60,77 +58,78 @@ void sendBits(const unsigned bits[], unsigned len) {
 }
 
 void transmit(const unsigned msg[], unsigned len) {
-    noInterrupts();
-
-    sendBits(hsMsg, MSG_LEN); // sending handshake so other bot knows message is coming
     sendBits(msg, len);
     digitalWrite(TRANSMIT_PIN, LOW); // ensure low afterwards
-
-    interrupts();
 }
 
-void receive(unsigned bits[], unsigned len) {
-    noInterrupts();
+bool receive(unsigned bits[], unsigned len) {
+    static unsigned long prevMillis = millis();
+    while (analogRead(RECEIVE_PIN) <= READ_THRESHOLD) {
+        if (millis() - prevMillis > TIMEOUT) {
+            prevMillis = millis();
+            Serial.println("receive timing out..."); // debug
+            return false;
+        }
+    }
 
-    for (unsigned i = 0; i < 2 * len; ++i) {
+    for (unsigned i = 0; i < len; ++i) {
         unsigned sum = 0;
         for (unsigned j = 0; j < BIT_SIZE; ++j) {
             // read all 25 bits, recording sum
-            int x = digitalRead(RECEIVE_PIN);
-            sum += x;
+            sum += analogRead(RECEIVE_PIN) > READ_THRESHOLD;
             delayMicroseconds(DATA_DELAY);
         }
+
         // average sum of 25 bits, adding value to bit[i]
         bits[i] = ((float)sum / BIT_SIZE > 0.5);
     }
 
-    interrupts();
+    Serial.println("received a message..."); // debug
+    return true;
 }
 
 bool checkMsg(const unsigned msgToCheck[], const unsigned correctMsg[], unsigned len) {
-    unsigned i;
+    Serial.print("Checking message: ");
+    for (int i = 0; i < len; ++i) Serial.print(msgToCheck[i]);
+    Serial.println("\n");
+
+    unsigned i, wrong = 0;
     for (i = 0; i < len; ++i) {
-        if (hsMsg[i] != msgToCheck[i] || msgToCheck[i+len] != correctMsg[i]) {
-            return false;
-        }
+        if (msgToCheck[i] != correctMsg[i]) wrong++;
     }
-    return true;
+    char buf[100]; sprintf(buf, "%d / %d = %f", wrong, len, (double)wrong / (double)len);
+    Serial.println(buf);
+    return ((float)wrong / (float)len) < 0.5;
 }
 
 // send a message and wait until acknowledgement
 void sendAndWait(const unsigned msgToSend[], const unsigned confirmation[]) {
-    do {
-        Serial.println("Transmitting until ack...");
-        receiving = false;
+    Serial.println("Transmitting until ack...");
 
-        while (1) {
-            unsigned long prevMillis = millis();
+    while (1) {
+        Serial.println("Transmitting msg");
+        transmit(msgToSend, MSG_LEN);
 
-            transmit(msgToSend, MSG_LEN);
-
-            // wait until receiving or timeout
-            while (!receiving && millis() - prevMillis < 1000) {}
-
-            if (receiving) break;
-        }
-
-        Serial.print("Receiving ack: ");
-        receive(recMsg, MSG_LEN);
-        for (int i = 0; i < 2 * MSG_LEN; ++i) Serial.print(recMsg[i]);
-        Serial.println("\n");
-    } while (!checkMsg(recMsg, confirmation, MSG_LEN));
+        Serial.println("Waiting for ack...");
+        if (receive(recMsg, MSG_LEN) && 
+                checkMsg(recMsg, confirmation, MSG_LEN)) break;
+        delay(750); // transmit only every 750 ms
+    }
 }
 
 // waiting for a communication
 void waiting(const unsigned msg[]) {
-    //digitalWrite(TRANSMIT_PIN, LOW); // needed for an unknown reason
-    do {
-        receiving = false;
-        while (!receiving) { delayMicroseconds(1); }
+    while (1) {
+        if (receive(recMsg, MSG_LEN) && checkMsg(recMsg, msg, MSG_LEN))
+            break;
+    }
+    //while (!receive(recMsg, MSG_LEN) ||
+    //        !checkMsg(recMsg, msg, MSG_LEN)) {};
 
-        receive(recMsg, MSG_LEN);
-        Serial.print("Transmitted message: ");
-        for (int i = 0; i < 2 * MSG_LEN; ++i) Serial.print(recMsg[i]);
-        Serial.println("\n");
-    } while (!checkMsg(recMsg, msg, MSG_LEN));
+    unsigned long prevMillis = millis();
+    while (millis() - prevMillis < 10000) {
+        Serial.println("Sending ack...");
+        transmit(ack, MSG_LEN); // send acknowledgement only after msg received
+        delay(100);
+    }
 }
