@@ -59,20 +59,24 @@ void loop() {
 
     // TODO this should read isBot1 and decide
 #if TRANSMIT
-    while(1) {
+    while (1) {
         delay(1000);
 
         Serial.println("Sending transMsg and waiting for ack...");
         sendAndWait(toxicMsg, ack);
-        delay(10000);
+        delay(2000);
     }
 #else
     while (1) {
         Serial.println("Waiting for transMsg...");
         waiting(toxicMsg);
-        delay(10000);
+        delay(2000);
     }
 #endif
+
+#endif
+
+#if TEST_COLLISION
 
 #endif
     
@@ -81,7 +85,7 @@ void loop() {
     int avgs[3][2] = { {0,0}, {0,0}, {0,0} };
     int avgNum = 64;
     for (int i = 0; i < 3; ++i) {
-        unsigned sumLeft = 0, sumRight = 0, count = 0;
+        unsigned sumLeft = 0, sumRight = 0;
 
         while (!hitBumper) {
             for (int i = 0; i < NUM_BUMPERS; ++i) {
@@ -119,9 +123,11 @@ static inline bool isYellow(int red, bool left) { \n\
     else      return (%d < red && red < %d);\n\
 } ";
 
-    sprintf(code, buf, avgs[0][0] - 10, avgs[0][0] + 10, // BLUE
+    sprintf(code, buf, 
+                 avgs[0][0] - 10, avgs[0][0] + 10, // BLUE
                  avgs[0][1] - 10, avgs[0][1] + 10,
 
+                 avgs[1][0] - 10, avgs[1][0] + 10, // RED
                  avgs[1][1] - 20, avgs[1][1] + 20,
 
                  avgs[2][0] - 10, avgs[2][0] + 20, // YELLOW
@@ -129,6 +135,7 @@ static inline bool isYellow(int red, bool left) { \n\
                  );
 
     Serial.println(code);
+    while (1) {};
 #endif
 
     isBot1 = digitalRead(BOT_SWITCH);
@@ -137,6 +144,7 @@ static inline bool isYellow(int red, bool left) { \n\
     if (isBot1) bot1();
     else        bot2();
 
+    digitalWrite(TRANSMIT_PIN, LOW);
     while (1); // stop forever
 }
 
@@ -158,7 +166,7 @@ void bot1(void) {
 
     // Moves backward until red and stops
     actionUntilColor(RED, backward);
-    turn(-30); // negative to turn right
+    turn(-60); // negative to turn right
     actionUntilColor(RED, turnRight);
 
     // Flash a red LED
@@ -189,13 +197,12 @@ void bot1(void) {
 
     // Follows red
     while (!followColorUntilColor(RED, YELLOW)) {}
+    Serial.println("Found yellow and about to communicate");
 
     // Communicates to Bot 2: `START`
-    delay(500);
+    transmit(startMsg, MSG_LEN);
 
-    // Waits for `ACK_START`
-    delay(500);
-
+    Serial.println("flashing green LED");
     // Flashes green LED
     flashLed(GREEN_LED);
 
@@ -209,19 +216,20 @@ void bot1(void) {
     flashLed(GREEN_LED);
 
     // Waits for `TOXIC`
-    delay(100);
+    Serial.println("Receiving toxic message");
+    while (!receive(recMsg, MSG_LEN)) {}
 
     // Flash yellow LED continuously
-    // TODO flash LED continously
+    digitalWrite(YELLOW_LED, HIGH);
 
     // Waits for `STOP_YELLOW`
-    delay(100);
+    while (!receive(recMsg, MSG_LEN)) {}
 
     // Turns off yellow LED
     digitalWrite(YELLOW_LED, LOW);
 
     // Waits for `DONE`
-    delay(100);
+    while (!receive(recMsg, MSG_LEN)) {}
 
     // Flashes green LED
     flashLed(GREEN_LED);
@@ -229,9 +237,12 @@ void bot1(void) {
 
 void bot2(void) {
     // Waits for `START`
-    delay(500);
+    Serial.println("Waiting for start");
+    while (!receive(recMsg, MSG_LEN)) {}
+    //transmit(startMsg, MSG_LEN);
 
     // Flash green LED
+    Serial.println("Lit green led");
     flashLed(GREEN_LED);
 
     // Puts bot in motion (`forward()`)
@@ -281,15 +292,16 @@ void bot2(void) {
     actionUntilColor(BLUE, turnRight);
 
     // Communicates to Bot 1: `TOXIC`
-    delay(100);
+    transmit(toxicMsg, MSG_LEN);
+
     // Flash yellow continuously
-    // TODO flash continuously
+    digitalWrite(YELLOW_LED, HIGH);
 
     // Follows blue, stops on yellow
     while (!followColorUntilColor(BLUE, YELLOW)) {}
 
     // Communicates to Bot 1: `STOP_YELLOW`
-    delay(100);
+    transmit(toxicMsg, MSG_LEN);
 
     // Stop flashing yellow LED
     digitalWrite(YELLOW_LED, LOW);
@@ -301,7 +313,7 @@ void bot2(void) {
     while (!followColorUntilColor(BLUE, YELLOW)) {}
 
     // Communicates to Bot 1: `DONE`
-    delay(100);
+    transmit(doneMsg, MSG_LEN);
 
     // Flashes green LED
     flashLed(GREEN_LED);
@@ -313,9 +325,9 @@ void bot2(void) {
 
 inline void flashLed(int ledPin) {
     digitalWrite(ledPin, HIGH);
-    delay(200);
+    delay(100);
     digitalWrite(ledPin, LOW);
-    delay(200);
+    delay(100);
 }
 
 inline void actionUntilColor(Colors c, void (*action)(void)) {
@@ -333,15 +345,18 @@ inline bool followColorUntilColor(Colors c1, Colors c2) {
     Colors left, right; readSensors(left, right);
 
     if (left == c2 || right == c2) {
+        Serial.println("both on c2");
         forward();
         delay(150);
         stop();
         return true;
     }
     else if ((left == c1 && right == c1)) {
+        Serial.println("Both on c1");
         forward();
     }
     else if (left != c1 && right != c1) {
+        Serial.println("Both off c1");
         bool turning = false, turningLeft = true;
         int i = 0, prevMillis;
 
@@ -363,17 +378,19 @@ inline bool followColorUntilColor(Colors c1, Colors c2) {
         stop();
     }
     else if (left == c1 && right != c1) {
+        Serial.println("Left on c1, right off c1");
         turnLeft();
         do { readSensors(left, right); } while (right != c1 && right != c2);
         stop();
     }
     else if (left != c1 && right == c1) {
+        Serial.println("Left off c1, right on c1");
         turnRight();
         do { readSensors(left, right); } while (left != c1 && left != c2);
         stop();
     }
     
-    delay(50);
+    delay(200);
 
     return false;
 }
@@ -389,6 +406,18 @@ void detectCollision(void) {
     if (currTime - lastInterruptTime > DEBOUNCE_TIME) {
         collisionHappened = true;
         lastInterruptTime = currTime;
+
+        for (int i = 0; i < NUM_BUMPERS; ++i) {
+            if (digitalRead(bumpers[i])) {
+                switch (i) {
+                    case FL: forward();   delay(500);
+                    case FR: backward();  delay(500);
+                    case R:  turnLeft();  delay(500);
+                    case L:  turnRight(); delay(500);
+                    case B:  forward();   delay(500);
+                }
+            }
+        }
     }
 }
 

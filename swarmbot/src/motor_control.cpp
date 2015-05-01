@@ -14,15 +14,15 @@
 
 #if MAZ
 
-#define SPEED_CONST 70
+#define SPEED_CONST 65
 #define LEFT_CALIB  1
-#define RIGHT_CALIB 1
+#define RIGHT_CALIB 1.1
 
 #else
 
-#define SPEED_CONST 100
-#define LEFT_CALIB  1.2
-#define RIGHT_CALIB 1
+#define SPEED_CONST 90
+#define LEFT_CALIB  1
+#define RIGHT_CALIB 1.075
 
 #endif
 
@@ -123,7 +123,7 @@ void turnRight(void) {
     digitalWrite(MR1, HIGH);
     digitalWrite(MR2, LOW);
 
-    enable(50);
+    enable(SPEED_CONST);
 }
 
 void turnLeft(void) {
@@ -137,7 +137,7 @@ void turnLeft(void) {
     digitalWrite(MR1, LOW);
     digitalWrite(MR2, HIGH);
 
-    enable(50);
+    enable(SPEED_CONST);
 }
 
 void stop(void) { disable(); }

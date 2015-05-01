@@ -12,20 +12,8 @@
 #define CARRIER        5
 #define DATA_DELAY     416  //  1/(1.2*10^3)/2 = 416 aka 1.2 kHz
 #define BIT_SIZE       25
-#define TIMEOUT        1000
+#define TIMEOUT        4000
 #define READ_THRESHOLD 700
-
-// received message buffer
-static unsigned recMsg[] = { 
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-};
 
 /* -------------------------- PRIVATE -------------------------- */
 
@@ -44,6 +32,8 @@ void setupCommunication(void) {
     OCR3A = 55; // Used to be 63
     // above sets the counter value at which register resets to 0x0000;
     // generate 20kHz when OCR3A=50
+
+    digitalWrite(TRANSMIT_PIN, LOW);
 }
 
 /* -------------------------- INTERFACE -------------------------- */
@@ -58,14 +48,18 @@ void sendBits(const unsigned bits[], unsigned len) {
 }
 
 void transmit(const unsigned msg[], unsigned len) {
-    sendBits(msg, len);
+    static unsigned long prevMillis = millis();
+    while (millis() - prevMillis < TIMEOUT) {
+        sendBits(msg, len);
+        digitalWrite(TRANSMIT_PIN, LOW); // ensure low afterwards
+    }
     digitalWrite(TRANSMIT_PIN, LOW); // ensure low afterwards
 }
 
 bool receive(unsigned bits[], unsigned len) {
     static unsigned long prevMillis = millis();
     while (analogRead(RECEIVE_PIN) <= READ_THRESHOLD) {
-        if (millis() - prevMillis > TIMEOUT) {
+        if (millis() - prevMillis < TIMEOUT) {
             prevMillis = millis();
             Serial.println("receive timing out..."); // debug
             return false;
@@ -88,7 +82,8 @@ bool receive(unsigned bits[], unsigned len) {
     return true;
 }
 
-bool checkMsg(const unsigned msgToCheck[], const unsigned correctMsg[], unsigned len) {
+bool checkMsg(const unsigned msgToCheck[], const unsigned correctMsg[], 
+        unsigned len, unsigned numOnes) {
     Serial.print("Checking message: ");
     for (int i = 0; i < len; ++i) Serial.print(msgToCheck[i]);
     Serial.println("\n");
@@ -99,7 +94,7 @@ bool checkMsg(const unsigned msgToCheck[], const unsigned correctMsg[], unsigned
     }
     char buf[100]; sprintf(buf, "%d / %d = %f", wrong, len, (double)wrong / (double)len);
     Serial.println(buf);
-    return ((float)wrong / (float)len) < 0.5;
+    return ((float)wrong / (float)numOnes) < 0.5;
 }
 
 // send a message and wait until acknowledgement
@@ -112,7 +107,7 @@ void sendAndWait(const unsigned msgToSend[], const unsigned confirmation[]) {
 
         Serial.println("Waiting for ack...");
         if (receive(recMsg, MSG_LEN) && 
-                checkMsg(recMsg, confirmation, MSG_LEN)) break;
+                checkMsg(recMsg, confirmation, MSG_LEN, 32)) break;
         delay(750); // transmit only every 750 ms
     }
 }
@@ -120,7 +115,7 @@ void sendAndWait(const unsigned msgToSend[], const unsigned confirmation[]) {
 // waiting for a communication
 void waiting(const unsigned msg[]) {
     while (1) {
-        if (receive(recMsg, MSG_LEN) && checkMsg(recMsg, msg, MSG_LEN))
+        if (receive(recMsg, MSG_LEN) && checkMsg(recMsg, msg, MSG_LEN, 32))
             break;
     }
     //while (!receive(recMsg, MSG_LEN) ||
@@ -133,3 +128,4 @@ void waiting(const unsigned msg[]) {
         delay(100);
     }
 }
+
