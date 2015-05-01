@@ -24,6 +24,7 @@ void turn(int angle);
 
 // turn bot left until stopped
 void turnLeft(void);
+void turnLeft(int speed);
 
 // turn bot right until stopped
 void turnRight(void);

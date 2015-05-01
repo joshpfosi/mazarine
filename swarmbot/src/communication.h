@@ -12,11 +12,7 @@
 // sets up pins for communication
 void setupCommunication(void);
 
-void transmit(const unsigned msg[], unsigned len);
+void transmit(const unsigned msg[], unsigned len, unsigned timeout);
 bool receive(unsigned bits[], unsigned len);
-
-// sending and waiting until specific message is received
-void sendAndWait(const unsigned msgToSend[], const unsigned confirmation[]);
-void waiting(const unsigned msg[]);
 
 #endif // COMMUNICATION_H

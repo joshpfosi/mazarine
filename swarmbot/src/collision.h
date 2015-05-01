@@ -5,8 +5,8 @@
 
 #define NUM_BUMPERS 5
 
-bool bumperHit[NUM_BUMPERS];
-bool collisionHappened;
+static volatile bool bumperHit[NUM_BUMPERS];
+static volatile bool collisionHappened;
 const int bumpers[] = { FL, FR, L, R, B };
 
 void detectCollision(void);

@@ -14,15 +14,14 @@
 
 #if MAZ
 
-#define SPEED_CONST 65
 #define LEFT_CALIB  1
-#define RIGHT_CALIB 1.1
+#define RIGHT_CALIB 1.3
+
 
 #else
 
-#define SPEED_CONST 90
 #define LEFT_CALIB  1
-#define RIGHT_CALIB 1.075
+#define RIGHT_CALIB 1.2
 
 #endif
 
@@ -64,7 +63,7 @@ void forward(void) {
     digitalWrite(MR1, HIGH);
     digitalWrite(MR2, LOW);
 
-    enable(SPEED_CONST);
+    enable(speed);
 }
 
 void backward(void) {
@@ -76,7 +75,7 @@ void backward(void) {
     digitalWrite(MR1, LOW);
     digitalWrite(MR2, HIGH);
 
-    enable(2 * SPEED_CONST);
+    enable(2 * speed);
 }
 
 // turn both motors in opposite directions to pivot
@@ -138,6 +137,20 @@ void turnLeft(void) {
     digitalWrite(MR2, HIGH);
 
     enable(SPEED_CONST);
+}
+
+void turnLeft(int speed) {
+    disable();
+
+    // turn left motor backward
+    digitalWrite(ML1, HIGH);
+    digitalWrite(ML2, LOW);
+
+    // turn right motor forward
+    digitalWrite(MR1, LOW);
+    digitalWrite(MR2, HIGH);
+
+    enable(speed);
 }
 
 void stop(void) { disable(); }

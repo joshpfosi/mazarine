@@ -12,8 +12,7 @@
 #define CARRIER        5
 #define DATA_DELAY     416  //  1/(1.2*10^3)/2 = 416 aka 1.2 kHz
 #define BIT_SIZE       25
-#define TIMEOUT        4000
-#define READ_THRESHOLD 700
+#define READ_THRESHOLD 500
 
 /* -------------------------- PRIVATE -------------------------- */
 
@@ -47,9 +46,9 @@ void sendBits(const unsigned bits[], unsigned len) {
     }
 }
 
-void transmit(const unsigned msg[], unsigned len) {
+void transmit(const unsigned msg[], unsigned len, unsigned timeout) {
     static unsigned long prevMillis = millis();
-    while (millis() - prevMillis < TIMEOUT) {
+    while (millis() - prevMillis < timeout) {
         sendBits(msg, len);
         digitalWrite(TRANSMIT_PIN, LOW); // ensure low afterwards
     }
@@ -95,37 +94,5 @@ bool checkMsg(const unsigned msgToCheck[], const unsigned correctMsg[],
     char buf[100]; sprintf(buf, "%d / %d = %f", wrong, len, (double)wrong / (double)len);
     Serial.println(buf);
     return ((float)wrong / (float)numOnes) < 0.5;
-}
-
-// send a message and wait until acknowledgement
-void sendAndWait(const unsigned msgToSend[], const unsigned confirmation[]) {
-    Serial.println("Transmitting until ack...");
-
-    while (1) {
-        Serial.println("Transmitting msg");
-        transmit(msgToSend, MSG_LEN);
-
-        Serial.println("Waiting for ack...");
-        if (receive(recMsg, MSG_LEN) && 
-                checkMsg(recMsg, confirmation, MSG_LEN, 32)) break;
-        delay(750); // transmit only every 750 ms
-    }
-}
-
-// waiting for a communication
-void waiting(const unsigned msg[]) {
-    while (1) {
-        if (receive(recMsg, MSG_LEN) && checkMsg(recMsg, msg, MSG_LEN, 32))
-            break;
-    }
-    //while (!receive(recMsg, MSG_LEN) ||
-    //        !checkMsg(recMsg, msg, MSG_LEN)) {};
-
-    unsigned long prevMillis = millis();
-    while (millis() - prevMillis < 10000) {
-        Serial.println("Sending ack...");
-        transmit(ack, MSG_LEN); // send acknowledgement only after msg received
-        delay(100);
-    }
 }
 

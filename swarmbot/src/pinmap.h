@@ -6,16 +6,24 @@
 
 #include "Arduino.h"
 
-#define MAZ         1
-#define CALIBRATION 0
-#define TEST_MOTOR  0
-#define TEST_PHOTO  0
-#define TEST_COMM   0
-#define TRANSMIT    0
+#define MAZ            1
+#define CALIBRATION    0
+#define TEST_MOTOR     0
+#define TEST_PHOTO     0
+#define TEST_COMM      0
+#define TEST_COLLISION 0
+#define TRANSMIT       0
+#define CHALLENGE2     0
+
+#if MAZ
+#define SPEED_CONST 55
+#else
+#define SPEED_CONST 70
+#endif
 
 // Interrupt pins
 
-#define COLLISION_INT    0 // pin 3
+#define COLLISION_INT    1 // pin 3
 
 // Overall pins
 
@@ -28,10 +36,12 @@
 
 // Photosensor pins
 
+#if MAZ
 #define PHOTO_RED_LEFT   8
 #define PHOTO_RED_RIGHT  9
+#else
 #define PHOTO_BLUE_LEFT  11
-#define PHOTO_BLUE_RIGHT 12
+#endif
                          
 #define PHOTOLEFT        A0
 #define PHOTORIGHT       A1
@@ -58,6 +68,7 @@
 
 #define RECEIVE_PIN      A5
 #define TRANSMIT_PIN     12
+#define TIMEOUT          5000
 
 /* Communication messages */
 static const unsigned transMsg[] = { 

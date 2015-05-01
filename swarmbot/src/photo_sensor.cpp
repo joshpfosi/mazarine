@@ -6,50 +6,48 @@
 #include "photo_sensor.h"
 
 void setupPhotosensor(void) {
-    pinMode(PHOTO_RED_LEFT,   OUTPUT);
-    pinMode(PHOTO_RED_RIGHT,  OUTPUT);
-    pinMode(PHOTO_BLUE_LEFT,  OUTPUT);
-    pinMode(PHOTO_BLUE_RIGHT, OUTPUT);
     pinMode(PHOTOLEFT,        INPUT);
     pinMode(PHOTORIGHT,       INPUT);
 
     // red can be on at all times
 #if MAZ
+    pinMode(PHOTO_RED_LEFT,   OUTPUT);
+    pinMode(PHOTO_RED_RIGHT,  OUTPUT);
     digitalWrite(PHOTO_RED_LEFT,  HIGH);
     digitalWrite(PHOTO_RED_RIGHT, HIGH);
 #else // Erythrean uses blue not red
+    pinMode(PHOTO_BLUE_LEFT,  OUTPUT);
     digitalWrite(PHOTO_BLUE_LEFT,  HIGH);
-    digitalWrite(PHOTO_BLUE_RIGHT, HIGH);
 #endif
     
 }
 
 #if MAZ
 static inline bool isBlue(int red, bool left) {
-    if (left) return (974 < red && red < 994);
-    else      return (982 < red && red < 1002);
+    if (left) return (977 < red && red < 997);
+    else      return (984 < red && red < 1004);
 }
 static inline bool isRed(int red, bool left) {
-    if (left) return (796 < red && red < 846);
-    else      return (852 < red && red < 892);
+    if (left) return (820 < red && red < 870);
+    else      return (866 < red && red < 920);
 }
 static inline bool isYellow(int red, bool left) {
-    if (left) return (725 < red && red < 765);
-    else      return (820 < red && red < 860);
-}
+    if (left) return (700 < red && red < 779);
+    else      return (800 < red && red < 852);
+}   
 #else
 static inline bool isBlue(int red, bool left) {
-    if (left) return (730 < red && red < 844);
-    else      return (580 < red && red < 720);
+    if (left) return (740 < red && red < 880);
+    else      return (570 < red && red < 700);
 }
 static inline bool isRed(int red, bool left) {
-    if (left) return (135 < red && red < 250);
-    else      return (140 < red && red < 200);
+    if (left) return (150 < red && red < 250);
+    else      return (110 < red && red < 200);
 }
 static inline bool isYellow(int red, bool left) {
     if (left) return (450 < red && red < 550);
-    else      return (350 < red && red < 430);
-}
+    else      return (350 < red && red < 450);
+}  
 #endif
 
 
