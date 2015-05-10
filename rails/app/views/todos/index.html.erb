@@ -1,0 +1,27 @@
+<div class="container">
+<h4 class="center-align">Swarmbot Status</h4>
+
+<p>This page displays real-time data and status updates from the swarmbot as it traverses dangerous terrain. This allows first responders to assess the scene from a distance.
+
+<table class="hoverable">
+  <thead>
+    <tr>
+      <th>Bot</th>
+      <th>Message</th>
+      <th>Status</th>
+      <th></th>
+    </tr>
+  </thead>
+
+  <tbody>
+    <% @todos.each do |todo| %>
+      <tr>
+        <td><%= todo.bot ? "Bot 1" : "Bot 2" %></td>
+        <td><%= todo.content %></td>
+        <td><span style="color: <%= todo.status ? '#388e3c' : '#d32f2f' %>" ><%= todo.status ? "Good" : "Bad" %></span></td>
+        <td class="center-align"><%= link_to '', todo, method: :delete, data: { confirm: 'Are you sure?' }, class: "mdi-action-delete"%></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+</div>
