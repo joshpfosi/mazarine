@@ -10,12 +10,10 @@ static bool isBot1  = true;
 static bool hitWall = false;
 // ----------------------------------------------------------------------------
 
-#define PUSH_CONST 200
+#define PUSH_CONST 300
 
 void bot1(void);
 void bot2(void);
-void bot1challenge(void);
-void bot2challenge(void);
 
 // Helper routines
 inline void flashLed              (int ledPin);
@@ -40,10 +38,7 @@ void setup() {
     setupPhotosensor();
     setupMotorControl();
     setupCollision();
-//#if CHALLENGE2
-//#else
     setupCommunication();
-//#endif
 }
 
 void loop() {
@@ -59,12 +54,10 @@ void loop() {
 #endif
 
 #if TEST_PHOTO
-    forward();
     while (1) testPhotosensor();
 #endif
 
 #if TEST_COMM
-
     // TODO this should read isBot1 and decide
 #if TRANSMIT
     transmit(transMsg, MSG_LEN, TIMEOUT);
@@ -161,13 +154,8 @@ static inline bool isYellow(int red, bool left) { \n\
     isBot1 = digitalRead(BOT_SWITCH);
 
     // GO state
-//#if CHALLENGE2
-//    if (isBot1) bot1challenge();
-//    else        bot2challenge();
-//#else
     if (isBot1) bot1();
     else        bot2();
-//#endif
 
     digitalWrite(TRANSMIT_PIN, LOW);
     while (1); // stop forever
@@ -197,11 +185,12 @@ void bot1(void) {
     // Flash a red LED
     flashLed(RED_LED); // pauses for 1 second to flash
 
-    // Follows red
+    // Follows red until centre yellow
     while (!followColorUntilColor(RED, YELLOW)) {}
     Serial.println("Found yellow");
     forward();
     delay(PUSH_CONST);
+    turn(-20);
     stop();
 
     // Stops on yellow, flashing yellow LED twice
@@ -230,7 +219,7 @@ void bot1(void) {
     turn(220);                       // ensures we escape red and actually turn
     actionUntilColor(RED, turnLeft);
 
-    // Follows red
+    // Follows red back to the middle
     while (!followColorUntilColor(RED, YELLOW)) {}
     Serial.println("Found yellow and about to communicate");
     forward();
@@ -241,10 +230,11 @@ void bot1(void) {
     transmit(startMsg, MSG_LEN, TIMEOUT);
 
     Serial.println("flashing green LED");
-    // Flashes green LED
-    flashLed(GREEN_LED);
+    // Flashes green LED twice
+    flashLed(GREEN_LED); // pauses for 1 second to flash
+    flashLed(GREEN_LED); // pauses for 1 second to flash
 
-    // Follows red
+    // Follows yellow
     while (!followColorUntilColor(YELLOW, RED)) {}
     forward();
     delay(PUSH_CONST);
@@ -254,14 +244,12 @@ void bot1(void) {
     while (!followColorUntilColor(RED, YELLOW)) {}
 
     // Turns on green LED
-    flashLed(GREEN_LED);
+    digitalWrite(GREEN_LED, HIGH);
 
     // Waits for `TOXIC`
-    digitalWrite(GREEN_LED, HIGH); // debugging
     Serial.println("Receiving toxic message");
-    turnLeft(50);
+    turnLeft(45);
     while (!receive(recMsg, MSG_LEN)) {}
-    digitalWrite(GREEN_LED, HIGH); // debugging
 
     stop();
     delay(2 * TIMEOUT); // don't double receive a message
@@ -270,22 +258,22 @@ void bot1(void) {
     digitalWrite(YELLOW_LED, HIGH);
 
     // Waits for `STOP_YELLOW`
-    digitalWrite(BLUE_LED, HIGH); // debugging
+    turnLeft(45);
     while (!receive(recMsg, MSG_LEN)) {}
-    digitalWrite(BLUE_LED, LOW); // debugging
 
     // Turns off yellow LED
     digitalWrite(YELLOW_LED, LOW);
 
-    delay(2 * TIMEOUT); // don't double receive a message
+    delay(TIMEOUT); // don't double receive a message
 
     // Waits for `DONE`
-    digitalWrite(RED_LED, HIGH); // debugging
+    Serial.println("Receiving toxic message");
+    turnLeft(45);
     while (!receive(recMsg, MSG_LEN)) {}
-    digitalWrite(RED_LED, LOW); // debugging
+    stop();
 
     // Flashes green LED
-    flashLed(GREEN_LED);
+    while (1) { flashLed(GREEN_LED); }
 }
 
 void bot2(void) {
@@ -295,9 +283,10 @@ void bot2(void) {
 
     delay(500);
 
-    // Flash green LED
+    // Flash green LED twice
     Serial.println("Lit green led");
-    flashLed(GREEN_LED);
+    flashLed(GREEN_LED); // pauses for 1 second to flash
+    flashLed(GREEN_LED); // pauses for 1 second to flash
 
     // Puts bot in motion (`forward()`)
     forward();
@@ -329,7 +318,6 @@ void bot2(void) {
     stop();
 
     // Stops on yellow, flashing yellow LED twice
-
     flashLed(YELLOW_LED);
     flashLed(YELLOW_LED);
 
@@ -350,12 +338,12 @@ void bot2(void) {
     digitalWrite(YELLOW_LED, HIGH);
     turn(-180);
     actionUntilColor(BLUE, turnRight);
-    turn(20);
 
     // Communicates to Bot 1: `TOXIC`
-    transmit(toxicMsg, MSG_LEN, 2 * TIMEOUT);
+    transmit(startMsg, MSG_LEN, TIMEOUT);
 
     // Flash yellow continuously
+    flashLed(YELLOW_LED);
     digitalWrite(YELLOW_LED, HIGH);
 
     // Follows blue, stops on yellow
@@ -365,7 +353,7 @@ void bot2(void) {
     stop();
 
     // Communicates to Bot 1: `STOP_YELLOW`
-    transmit(toxicMsg, MSG_LEN, 2 * TIMEOUT);
+    transmit(startMsg, MSG_LEN, TIMEOUT);
 
     // Stop flashing yellow LED
     digitalWrite(YELLOW_LED, LOW);
@@ -378,168 +366,14 @@ void bot2(void) {
 
     // Follows blue, stops on yellow
     while (!followColorUntilColor(BLUE, YELLOW)) {}
+    stop();
 
     // Communicates to Bot 1: `DONE`
-    transmit(doneMsg, MSG_LEN, 2 * TIMEOUT);
+    transmit(doneMsg, MSG_LEN, TIMEOUT);
 
     // Flashes green LED
-    flashLed(GREEN_LED);
+    while (1) { flashLed(GREEN_LED); }
 }
-
-//void bot1challenge(void) {
-//    // Puts bot in motion (`forward()`)
-//    forward();
-//
-//    // Loops until collision (boolean is set in ISR)
-//    while (!hitWall) {
-//        for (int i = 0; i < NUM_BUMPERS; ++i) {
-//            if (digitalRead(bumpers[i])) {
-//                hitWall = true;
-//            }
-//        }
-//        delay(1);
-//    }
-//    Serial.println("Hit wall");
-//
-//
-//    // Moves backward until red and stops
-//    actionUntilColor(RED, backward);
-//    turn(-60); // negative to turn right
-//    actionUntilColor(RED, turnRight);
-//
-//    // Flash a red LED
-//    flashLed(RED_LED); // pauses for 1 second to flash
-//
-//    // Follows red
-//    while (!followColorUntilColor(RED, YELLOW)) {}
-//    Serial.println("Found yellow");
-//
-//    // Stops on yellow, flashing yellow LED twice
-//    flashLed(YELLOW_LED); // pauses for 1 second to flash
-//    flashLed(YELLOW_LED); // pauses for 1 second to flash
-//
-//    // experimentally necessary to avoid thick black line
-//    forward();
-//    delay(75);
-//    
-//    // Follows yellow
-//    Serial.println("Following yellow until red");
-//    while (!followColorUntilColor(YELLOW, RED)) {}
-//
-//    // Follows red
-//    Serial.println("Following red until yellow");
-//    while (!followColorUntilColor(RED, YELLOW)) {}
-//
-//    // Stops on yellow, turns on yellow LED, turns 180 degrees
-//    Serial.println("Turning until red");
-//    stop();
-//    digitalWrite(YELLOW_LED, HIGH);
-//    turn(220);                       // ensures we escape red and actually turn
-//    actionUntilColor(RED, turnLeft);
-//
-//    // Follows red
-//    while (!followColorUntilColor(RED, YELLOW)) {}
-//    Serial.println("Found yellow and about to communicate");
-//
-//    Serial.println("flashing green LED");
-//    // Flashes green LED
-//    flashLed(GREEN_LED);
-//
-//    // Follows red
-//    while (!followColorUntilColor(YELLOW, RED)) {}
-//
-//    // Follows red, stops on yellow
-//    while (!followColorUntilColor(RED, YELLOW)) {}
-//
-//    // Turns on green LED
-//    flashLed(GREEN_LED);
-//
-//    // Flash yellow LED continuously
-//    digitalWrite(YELLOW_LED, HIGH);
-//
-//    // Turns off yellow LED
-//    digitalWrite(YELLOW_LED, LOW);
-//
-//    // Flashes green LED
-//    flashLed(GREEN_LED);
-//}
-//
-//void bot2challenge(void) {
-//    // Waits for `START`
-//    Serial.println("Waiting for start");
-//    delay(6000);
-//
-//    // Flash green LED
-//    Serial.println("Lit green led");
-//    flashLed(GREEN_LED);
-//
-//    // Puts bot in motion (`forward()`)
-//    forward();
-//
-//    // Loops until collision (boolean is set in ISR)
-//    while (!hitWall) {
-//        for (int i = 0; i < NUM_BUMPERS; ++i) {
-//            if (digitalRead(bumpers[i])) {
-//                hitWall = true;
-//            }
-//        }
-//        delay(1);
-//    }
-//    Serial.println("Hit wall");
-//
-//    // Moves backward until blue and stops
-//    actionUntilColor(BLUE, backward);
-//    turn(60); // positive to turn left
-//    actionUntilColor(BLUE, turnLeft);
-//
-//    // Stops on blue, flashing a blue LED
-//    flashLed(BLUE_LED);
-//
-//    // Turns a predetermined angle to the right, and follows blue
-//    while (!followColorUntilColor(BLUE, YELLOW)) {}
-//    Serial.println("Found yellow");
-//
-//    // Stops on yellow, flashing yellow LED twice
-//
-//    flashLed(YELLOW_LED);
-//    flashLed(YELLOW_LED);
-//
-//    // Follows yellow
-//    Serial.println("Following yellow until blue");
-//    while (!followColorUntilColor(YELLOW, BLUE)) {}
-//
-//    // Follows blue
-//    Serial.println("Following blue until yellow");
-//    while (!followColorUntilColor(BLUE, YELLOW)) {}
-//
-//    // Stops on yellow, turns on yellow LED, turns 180 degrees
-//    Serial.println("Turning until blue");
-//    stop();
-//    digitalWrite(YELLOW_LED, HIGH);
-//    turn(-180);
-//    actionUntilColor(BLUE, turnRight);
-//    turn(20);
-//
-//    // Flash yellow continuously
-//    digitalWrite(YELLOW_LED, HIGH);
-//
-//    // Follows blue, stops on yellow
-//    while (!followColorUntilColor(BLUE, YELLOW)) {}
-//
-//    delay(500);
-//
-//    // Stop flashing yellow LED
-//    digitalWrite(YELLOW_LED, LOW);
-//
-//    // Follows yellow until blue
-//    while (!followColorUntilColor(YELLOW, BLUE)) {}
-//
-//    // Follows blue, stops on yellow
-//    while (!followColorUntilColor(BLUE, YELLOW)) {}
-//
-//    // Flashes green LED
-//    flashLed(GREEN_LED);
-//}
 
 // ----------------------------------------------------------------------------
 // Helper Routines
@@ -566,15 +400,16 @@ inline void actionUntilColor(Colors c, void (*action)(void)) {
 inline bool followColorUntilColor(Colors c1, Colors c2) {
     Colors left, right; readSensors(left, right);
 
-    if (left == c2 || right == c2) {
-        Serial.println("both on c2");
-        stop();
-        return true;
-    }
-    else if ((left == c1 && right == c1)) {
-        Serial.println("Both on c1");
-        forward();
-    }
+    if (left == c2 && right == c2)      { stop(); delay(50); return true; }
+    else if (left == c1 && right == c2) turnRight();
+    else if (left == c2 && right == c1) turnLeft();
+    else if (left == c2 && right == BLACK) forward();
+    else if (left == BLACK && right == c2) forward();
+    else if (left == c2 && right != c2) turnLeft();
+    else if (left != c2 && right == c2) turnRight();
+    else if (left == c1 && right == c1) forward();
+    else if (left == c1 && right != c1) turnLeft();
+    else if (left != c1 && right == c1) turnRight();
     else if (left != c1 && right != c1) {
         Serial.println("Both off c1");
         bool turning = false, turningLeft = !isBot1;
@@ -588,7 +423,7 @@ inline bool followColorUntilColor(Colors c1, Colors c2) {
             }
 
             // turn other way after 100*i milliseconds
-            if (millis() > (100 * i) + prevMillis) {
+            if (millis() > (200 * i) + prevMillis) {
                 turning = false; ++i;
             }
 
@@ -597,19 +432,8 @@ inline bool followColorUntilColor(Colors c1, Colors c2) {
         } while (left != c1 && right != c1);
         stop();
     }
-    else if (left == c1 && right != c1) {
-        Serial.println("Left on c1, right off c1");
-        turnLeft();
-        do { readSensors(left, right); } while (right != c1 && right != c2 && left == c1);
-        stop();
-    }
-    else if (left != c1 && right == c1) {
-        Serial.println("Left off c1, right on c1");
-        turnRight();
-        do { readSensors(left, right); } while (left != c1 && left != c2 && right == c1);
-        stop();
-    }
 
+    delay(150);
     return false;
 }
 

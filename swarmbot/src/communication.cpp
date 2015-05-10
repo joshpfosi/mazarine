@@ -47,7 +47,7 @@ void sendBits(const unsigned bits[], unsigned len) {
 }
 
 void transmit(const unsigned msg[], unsigned len, unsigned timeout) {
-    static unsigned long prevMillis = millis();
+    unsigned long prevMillis = millis();
     while (millis() - prevMillis < timeout) {
         sendBits(msg, len);
         digitalWrite(TRANSMIT_PIN, LOW); // ensure low afterwards

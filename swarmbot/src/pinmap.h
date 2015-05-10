@@ -13,13 +13,6 @@
 #define TEST_COMM      0
 #define TEST_COLLISION 0
 #define TRANSMIT       0
-#define CHALLENGE2     0
-
-#if MAZ
-#define SPEED_CONST 55
-#else
-#define SPEED_CONST 70
-#endif
 
 // Interrupt pins
 
@@ -40,7 +33,7 @@
 #define PHOTO_RED_LEFT   8
 #define PHOTO_RED_RIGHT  9
 #else
-#define PHOTO_BLUE_LEFT  11
+#define PHOTO_BLUE       11
 #endif
                          
 #define PHOTOLEFT        A0

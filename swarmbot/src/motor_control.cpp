@@ -14,12 +14,13 @@
 
 #if MAZ
 
+#define SPEED_CONST 60
 #define LEFT_CALIB  1
 #define RIGHT_CALIB 1.3
 
-
 #else
 
+#define SPEED_CONST 60
 #define LEFT_CALIB  1
 #define RIGHT_CALIB 1.2
 

@@ -16,37 +16,38 @@ void setupPhotosensor(void) {
     digitalWrite(PHOTO_RED_LEFT,  HIGH);
     digitalWrite(PHOTO_RED_RIGHT, HIGH);
 #else // Erythrean uses blue not red
-    pinMode(PHOTO_BLUE_LEFT,  OUTPUT);
-    digitalWrite(PHOTO_BLUE_LEFT,  HIGH);
+    pinMode(PHOTO_BLUE,       OUTPUT);
+    digitalWrite(PHOTO_BLUE,  HIGH);
 #endif
     
 }
 
 #if MAZ
 static inline bool isBlue(int red, bool left) {
-    if (left) return (977 < red && red < 997);
-    else      return (984 < red && red < 1004);
+    if (left) return (985 < red && red < 1000);
+    else      return (992 < red && red < 1000);
 }
 static inline bool isRed(int red, bool left) {
-    if (left) return (820 < red && red < 870);
-    else      return (866 < red && red < 920);
+    if (left) return (816 < red && red < 856);
+    else      return (879 < red && red < 919);
 }
 static inline bool isYellow(int red, bool left) {
-    if (left) return (700 < red && red < 779);
-    else      return (800 < red && red < 852);
-}   
+    if (left) return (753 < red && red < 793);
+    else      return (818 < red && red < 873);
+}
+
 #else
 static inline bool isBlue(int red, bool left) {
-    if (left) return (740 < red && red < 880);
-    else      return (570 < red && red < 700);
+    if (left) return (816 < red && red < 856);
+    else      return (617 < red && red < 657);
 }
 static inline bool isRed(int red, bool left) {
-    if (left) return (150 < red && red < 250);
-    else      return (110 < red && red < 200);
+    if (left) return (165 < red && red < 245);
+    else      return (133 < red && red < 173);
 }
 static inline bool isYellow(int red, bool left) {
-    if (left) return (450 < red && red < 550);
-    else      return (350 < red && red < 450);
+    if (left) return (480 < red && red < 555);
+    else      return (366 < red && red < 416);
 }  
 #endif
 
